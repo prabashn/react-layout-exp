@@ -33,6 +33,7 @@ const gridConfig = {
         </div>
       ),
       animate: true,
+      stick: true,
       row: 1,
       col: 1
     },

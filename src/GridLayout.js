@@ -1,11 +1,10 @@
 import React from "react";
-import { GridAnimatable } from "./GridAnimatable";
-import { ChildWrapper } from "./ChildWrapper";
-import { WrapperRefContext } from "./WrapperRefContext";
+import { Animatable } from "./Animatable";
+import { Stickable } from "./Stickable";
+import { BehaviorCollection } from "./BehaviorCollection";
+import { memoize } from "lodash-es";
 
 export class GridLayout extends React.Component {
-  childContainerElementRef = new Map();
-
   render() {
     const gridConfig = this.props.gridConfig;
 
@@ -19,29 +18,45 @@ export class GridLayout extends React.Component {
             ...childConfig.childStyle
           };
 
-          let Wrapper = childConfig.animate ? GridAnimatable : ChildWrapper;
-          const key = childConfig.key || index;
-
-          // if needed, create & stash our child refs map under the child's key
-          let childRef = this.childContainerElementRef.get(key);
-          if (!childRef) {
-            this.childContainerElementRef.set(
-              key,
-              (childRef = React.createRef())
-            );
-          }
+          const { key = index } = childConfig;
+          let behaviors = this.getChildBehaviors(key, childConfig);
+          let childRef = this.getChildRef(key);
 
           return (
-            <WrapperRefContext.Provider value={childRef} key={key}>
-              <div style={styleObj} ref={childRef}>
-                <Wrapper>{childConfig.component}</Wrapper>
-              </div>
-            </WrapperRefContext.Provider>
+            <BehaviorCollection
+              behaviors={behaviors}
+              key={key}
+              style={styleObj}
+              containerRef={childRef}
+            >
+              {childConfig.component}
+            </BehaviorCollection>
           );
         })}
       </div>
     );
   }
+
+  getChildRef = memoize(_childKey => React.createRef());
+
+  getChildBehaviors(childKey, childConfig) {
+    const { animate, stick } = childConfig;
+    return this.getCachedBehaviors([childKey, animate, stick], () => {
+      const behaviors = [];
+      if (animate) {
+        behaviors.push(new Animatable());
+      }
+      if (stick) {
+        behaviors.push(new Stickable());
+      }
+      return behaviors;
+    });
+  }
+
+  getCachedBehaviors = memoize(
+    (_keys, getBehaviors) => getBehaviors(),
+    (keys, _getBehaviors) => keys.join("|")
+  );
 
   getChildWrapperRef(key) {
     return this.childContainerElementRef.get(key);
