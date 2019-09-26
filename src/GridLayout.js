@@ -47,7 +47,8 @@ export class GridLayout extends React.Component {
         behaviors.push(new Animatable());
       }
       if (stick) {
-        behaviors.push(new Stickable());
+        //behaviors.push(new Stickable());
+        behaviors.push(Stickable);
       }
       return behaviors;
     });

@@ -1,4 +1,5 @@
 import { Behavior } from "./Behavior";
+import { getRelativePosition } from "./positionHelper";
 
 const removeTransformStyle = {
   transition: null,
@@ -22,6 +23,13 @@ export class Animatable extends Behavior {
   relativePos = null;
   resetTransitionTimeout = null;
 
+  beforeRender(containerRef) {
+    // in-case things have shifted/resized after the previous render/mount/update
+    // re-calculate the container position before the new styles are applied by
+    // BehaviorCollection
+    this.calcCurrentPos(containerRef);
+  }
+
   mounted(containerRef) {
     this.calcCurrentPos(containerRef);
   }
@@ -41,24 +49,22 @@ export class Animatable extends Behavior {
   }
 
   calcCurrentPos(containerRef) {
+    if (!containerRef.current) {
+      return;
+    }
+
     // save last known relative pos in prev position variable
     // so we can use for translation animation offset
     if (this.relativePos) {
       this.prevPos = this.relativePos;
     }
 
-    const parent = containerRef.current.offsetParent;
+    const {
+      current: self,
+      current: { offsetParent: parent }
+    } = containerRef;
 
-    var parentPos = parent
-      ? parent.getBoundingClientRect()
-      : { left: 0, top: 0 };
-
-    var selfPos = containerRef.current.getBoundingClientRect();
-
-    this.relativePos = {
-      left: selfPos.left - parentPos.left,
-      top: selfPos.top - parentPos.top
-    };
+    this.relativePos = getRelativePosition(self, parent);
 
     if (!this.prevPos) {
       console.log("start: " + [this.relativePos.left, this.relativePos.top]);

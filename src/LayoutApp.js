@@ -13,7 +13,8 @@ const gridConfig = {
     position: "relative",
     display: "grid",
     //height: "calc(100vh - 100px)", // 16px to account for some random margin added by the sandbox.io
-    gridTemplateRows: "auto calc(100vh - 200px) auto",
+    //gridTemplateRows: "auto calc(100vh - 200px) auto",
+    gridTemplateRows: "auto auto auto auto",
     gridTemplateColumns: "1fr 1fr"
     // "grid-template-rows": "auto 1fr auto",
     // "grid-template-columns": "1fr 1fr"
@@ -23,6 +24,7 @@ const gridConfig = {
       key: "child1",
       component: (
         <div
+          id="child1"
           style={{
             ...childStyle,
             background: "rgba(0,255,0,.2)"
@@ -33,18 +35,22 @@ const gridConfig = {
         </div>
       ),
       animate: true,
-      stick: true,
+      //stick: true,
       row: 1,
       col: 1
     },
     {
       key: "child2",
       component: (
-        <div style={{ ...childStyle, background: "rgba(255,255,0,.2)" }}>
+        <div
+          id="child2"
+          style={{ ...childStyle, background: "rgba(255,255,0,.2)" }}
+        >
           Child 2
         </div>
       ),
       animate: true,
+      //stick: true,
       row: 1,
       col: 2
     },
@@ -52,22 +58,26 @@ const gridConfig = {
       key: "child3",
       component: (
         <div
+          id="child3"
           style={{
             ...childStyle,
             height: "200px",
-            background: "rgba(0,0,255,.2)"
+            background: "rgba(0,0,255,.2)",
+            //margin: "10px 30px"
+            width: "400px"
           }}
         >
           Child 3
         </div>
       ),
       animate: true,
+      stick: true,
       row: 2,
       col: 1,
       colSpan: 2,
       childStyle: {
         alignSelf: "start",
-        margin: "10px 30px"
+        justifySelf: "center"
         //"align-self": "start"
       }
     },
@@ -75,9 +85,11 @@ const gridConfig = {
       key: "child4",
       component: (
         <div
+          id="child4"
           style={{
             ...childStyle,
-            height: "100px",
+            height: "10vh",
+            width: "50vw",
             background: "rgba(255,0,0,.2)"
           }}
         >
@@ -85,25 +97,49 @@ const gridConfig = {
         </div>
       ),
       animate: true,
+      stick: true,
       row: 3,
       col: 1,
       colSpan: 2,
       childStyle: {
-        alignSelf: "end"
+        justifySelf: "center"
+        //alignSelf: "end"
+        //"align-self": "end"
+      }
+    },
+    {
+      key: "child5",
+      component: (
+        <div
+          id="child5"
+          style={{
+            ...childStyle,
+            height: "100vh",
+            background: "rgba(255,255,0,.2)"
+          }}
+        >
+          Child 5
+        </div>
+      ),
+      row: 4,
+      col: 1,
+      colSpan: 2,
+      childStyle: {
+        //alignSelf: "end"
         //"align-self": "end"
       }
     }
   ]
 };
 
-const gridConfig2 = {
-  ...gridConfig,
-  gridStyle: {
-    ...gridConfig.gridStyle,
-    gridTemplateRows: "auto auto auto",
-    gridTemplateColumns: "1fr 1fr"
-  }
-};
+// const gridConfig2 = {
+//   ...gridConfig,
+//   gridStyle: {
+//     ...gridConfig.gridStyle,
+//     gridTemplateRows: "auto auto auto",
+//     gridTemplateColumns: "1fr 1fr"
+//   }
+// };
 
 const swapColsAndRowsConfig = {
   ...gridConfig,
@@ -125,7 +161,8 @@ const swapColsAndRowsConfig = {
     {
       ...gridConfig.children[3],
       row: gridConfig.children[2].row
-    }
+    },
+    gridConfig.children[4]
   ]
 };
 
@@ -139,7 +176,11 @@ const swapOneChild = {
       ...gridConfig.children[2],
       row: gridConfig.children[3].row
     },
-    gridConfig.children[3]
+    {
+      ...gridConfig.children[3],
+      row: gridConfig.children[2].row
+    },
+    gridConfig.children[4]
   ]
 };
 
@@ -157,9 +198,10 @@ export class LayoutApp extends React.Component {
     props.button2.addEventListener("click", () =>
       this.setState({ gridConfig: swapColsAndRowsConfig })
     );
-    props.button3.addEventListener("click", () =>
-      //this.setState({ gridConfig: swapOneChild })
-      this.setState({ gridConfig: gridConfig2 })
+    props.button3.addEventListener(
+      "click",
+      () => this.setState({ gridConfig: swapOneChild })
+      //this.setState({ gridConfig: gridConfig2 })
     );
     props.button4.addEventListener("click", () =>
       // TODO: we can do intersection observer on these raw elements now to do any custom handling at the DOM level

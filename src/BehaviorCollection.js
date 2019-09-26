@@ -11,6 +11,7 @@ import React from "react";
  */
 export class BehaviorCollection extends React.Component {
   behaviors = [];
+  mountableBehaviorRefs = [];
   containerRef = null;
 
   constructor(props) {
@@ -20,19 +21,49 @@ export class BehaviorCollection extends React.Component {
   }
 
   render() {
-    const { behaviors, containerRef, ...otherProps } = this.props;
-    return <div ref={this.containerRef} {...otherProps} />;
+    const { behaviors, containerRef, children, ...otherProps } = this.props;
+    let finalChildren = children;
+
+    this.behaviors.forEach((behavior, index) => {
+      if (behavior.prototype && behavior.prototype.render) {
+        const Behavior = behavior;
+
+        const behaviorRef =
+          this.mountableBehaviorRefs[index] ||
+          (this.mountableBehaviorRefs[index] = React.createRef());
+
+        finalChildren = <Behavior ref={behaviorRef}>{finalChildren}</Behavior>;
+      } else if (behavior.beforeRender) {
+        behavior.beforeRender(this.containerRef);
+      }
+    });
+
+    return (
+      <div ref={this.containerRef} {...otherProps} children={finalChildren} />
+    );
   }
 
   componentDidMount() {
     this.behaviors.forEach(
       behavior => behavior.mounted && behavior.mounted(this.containerRef)
     );
+    this.mountableBehaviorRefs.forEach(
+      ref =>
+        ref.current &&
+        ref.current.mounted &&
+        ref.current.mounted(this.containerRef)
+    );
   }
 
   componentDidUpdate() {
     this.behaviors.forEach(
       behavior => behavior.updated && behavior.updated(this.containerRef)
+    );
+    this.mountableBehaviorRefs.forEach(
+      ref =>
+        ref.current &&
+        ref.current.updated &&
+        ref.current.updated(this.containerRef)
     );
   }
 }
