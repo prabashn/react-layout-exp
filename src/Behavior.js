@@ -1,5 +1,4 @@
-export class Behavior {
-  beforeRender(containerRef) {}
-  mounted(containerRef) {}
-  updated(contianerRef) {}
-}
+// export class Behavior {
+//   mounted(containerRef) {}
+//   updated(contianerRef) {}
+// }

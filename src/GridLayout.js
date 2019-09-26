@@ -22,6 +22,14 @@ export class GridLayout extends React.Component {
           let behaviors = this.getChildBehaviors(key, childConfig);
           let childRef = this.getChildRef(key);
 
+          if (!behaviors.length) {
+            return (
+              <div key={key} style={styleObj} ref={childRef}>
+                {childConfig.component}
+              </div>
+            );
+          }
+
           return (
             <BehaviorCollection
               behaviors={behaviors}
@@ -44,7 +52,7 @@ export class GridLayout extends React.Component {
     return this.getCachedBehaviors([childKey, animate, stick], () => {
       const behaviors = [];
       if (animate) {
-        behaviors.push(new Animatable());
+        behaviors.push(Animatable);
       }
       if (stick) {
         //behaviors.push(new Stickable());

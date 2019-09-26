@@ -20,3 +20,7 @@ export function getOffsetPosition(self) {
   const { offsetLeft: parentLeft, offsetTop: parentTop } = self.offsetParent;
   return { left: left + parentLeft, top: top + parentTop };
 }
+
+export function toPx(value) {
+  return Math.round(value * 10) / 10 + "px";
+}

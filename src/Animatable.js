@@ -1,5 +1,7 @@
-import { Behavior } from "./Behavior";
-import { getRelativePosition } from "./positionHelper";
+//import { Behavior } from "./Behavior";
+import { toPx, getRelativePosition } from "./positionHelper";
+import React from "react";
+import { BehaviorContext } from "./BehaviorContext";
 
 const removeTransformStyle = {
   transition: null,
@@ -17,20 +19,47 @@ const transitionTimeMs = 250;
  * This is the component that does the main animation work by remembering the previous
  * position and apply animation style to the new position.
  */
-export class Animatable extends Behavior {
+export class Animatable extends React.Component {
   //} extends React.Component {
   prevPos = null;
   relativePos = null;
   resetTransitionTimeout = null;
+  containerRef;
+  //behaviorContext = null;
+  animationsEnabled = true;
 
-  beforeRender(containerRef) {
+  // beforeRender(containerRef) {
+  //   // in-case things have shifted/resized after the previous render/mount/update
+  //   // re-calculate the container position before the new styles are applied by
+  //   // BehaviorCollection
+  //   this.calcCurrentPos(containerRef);
+  // }
+
+  render() {
     // in-case things have shifted/resized after the previous render/mount/update
     // re-calculate the container position before the new styles are applied by
     // BehaviorCollection
-    this.calcCurrentPos(containerRef);
+    if (this.containerRef) {
+      this.calcCurrentPos(this.containerRef);
+    }
+
+    return (
+      <BehaviorContext.Consumer children={this.renderWithBehaviorContext} />
+    );
   }
 
+  renderWithBehaviorContext = behaviorContext => {
+    this.animationsEnabled = behaviorContext.animationsEnabled;
+    behaviorContext.subscribe(this.behaviorContextChanged);
+
+    return this.props.children;
+  };
+
+  behaviorContextChanged = ({ animationsEnabled }) =>
+    (this.animationsEnabled = animationsEnabled);
+
   mounted(containerRef) {
+    this.containerRef = containerRef;
     this.calcCurrentPos(containerRef);
   }
 
@@ -39,6 +68,8 @@ export class Animatable extends Behavior {
     // like clearing any pending transition-cleanup timers, and transition related styles.
     // so that we can calculate the current position with where it is actually supposed to
     // render without any in-progress translate animations.
+    this.containerRef = containerRef;
+
     clearTimeout(this.resetTransitionTimeout);
     this.setStyle(containerRef, removeTransformStyle);
 
@@ -76,9 +107,15 @@ export class Animatable extends Behavior {
       return;
     }
 
+    if (!this.animationsEnabled) {
+      console.log("animations disabled!");
+      this.setStyle(containerRef, removeTransformStyle);
+      return;
+    }
+
     // prepare to animate from previous to current!
-    const revLeft = Math.round(this.prevPos.left - this.relativePos.left);
-    const revTop = Math.round(this.prevPos.top - this.relativePos.top);
+    const revLeft = this.prevPos.left - this.relativePos.left;
+    const revTop = this.prevPos.top - this.relativePos.top;
 
     // if the reverse transform is 0, 0, then nothing to do
     if (!revLeft && !revTop) {
@@ -86,7 +123,7 @@ export class Animatable extends Behavior {
       return;
     }
 
-    const transform = "translate(" + revLeft + "px, " + revTop + "px)";
+    const transform = "translate(" + toPx(revLeft) + ", " + toPx(revTop) + ")";
 
     // set the fake reset transform without any transition
     this.setStyle(containerRef, { transform });

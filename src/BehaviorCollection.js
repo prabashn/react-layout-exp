@@ -1,4 +1,5 @@
 import React from "react";
+import { BehaviorContext } from "./BehaviorContext";
 
 /**
  * This component just serves as a wrapper for non-animated components
@@ -10,60 +11,68 @@ import React from "react";
  * TODO: use this as a base class for GridAnimatable to apply the same perf optimizations.
  */
 export class BehaviorCollection extends React.Component {
-  behaviors = [];
-  mountableBehaviorRefs = [];
   containerRef = null;
+  behaviorRefs = [];
+  behaviorContext = {};
 
   constructor(props) {
     super(props);
     this.containerRef = props.containerRef;
-    this.behaviors.push(...(props.behaviors || []));
+
+    const subscribers = [];
+    this.setBehaviorContext({
+      setBehaviorContext: this.setBehaviorContext,
+      animationsEnabled: true,
+      subscribers,
+      subscribe: callback => {
+        if (!subscribers.indexOf(callback)) {
+          subscribers.push(callback);
+        }
+      }
+    });
   }
+
+  setBehaviorContext = newContext => {
+    Object.assign(this.behaviorContext, newContext);
+    this.behaviorContext.subscribers.forEach(subscriber => {
+      subscriber(this.behaviorContext);
+    });
+  };
 
   render() {
     const { behaviors, containerRef, children, ...otherProps } = this.props;
-    let finalChildren = children;
 
-    this.behaviors.forEach((behavior, index) => {
-      if (behavior.prototype && behavior.prototype.render) {
-        const Behavior = behavior;
+    var WrappedComponent = children;
 
-        const behaviorRef =
-          this.mountableBehaviorRefs[index] ||
-          (this.mountableBehaviorRefs[index] = React.createRef());
+    behaviors.forEach((Behavior, i) => {
+      const behaviorRef =
+        this.behaviorRefs[i] || (this.behaviorRefs[i] = React.createRef());
 
-        finalChildren = <Behavior ref={behaviorRef}>{finalChildren}</Behavior>;
-      } else if (behavior.beforeRender) {
-        behavior.beforeRender(this.containerRef);
-      }
+      WrappedComponent = (
+        <Behavior ref={behaviorRef}>{WrappedComponent}</Behavior>
+      );
     });
 
     return (
-      <div ref={this.containerRef} {...otherProps} children={finalChildren} />
+      <div ref={this.containerRef} {...otherProps}>
+        <BehaviorContext.Provider value={this.behaviorContext}>
+          {WrappedComponent}
+        </BehaviorContext.Provider>
+      </div>
     );
   }
 
   componentDidMount() {
-    this.behaviors.forEach(
-      behavior => behavior.mounted && behavior.mounted(this.containerRef)
-    );
-    this.mountableBehaviorRefs.forEach(
-      ref =>
-        ref.current &&
-        ref.current.mounted &&
-        ref.current.mounted(this.containerRef)
-    );
+    this.behaviorRefs.forEach(behaviorRef => {
+      const { current } = behaviorRef;
+      current && current.mounted && current.mounted(this.containerRef);
+    });
   }
 
   componentDidUpdate() {
-    this.behaviors.forEach(
-      behavior => behavior.updated && behavior.updated(this.containerRef)
-    );
-    this.mountableBehaviorRefs.forEach(
-      ref =>
-        ref.current &&
-        ref.current.updated &&
-        ref.current.updated(this.containerRef)
-    );
+    this.behaviorRefs.forEach(behaviorRef => {
+      const { current } = behaviorRef;
+      current && current.updated && current.updated(this.containerRef);
+    });
   }
 }

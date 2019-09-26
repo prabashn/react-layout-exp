@@ -1,11 +1,12 @@
-import { Behavior } from "./Behavior";
+//import { Behavior } from "./Behavior";
 import { throttle } from "lodash-es";
-import { numericLiteral } from "babel-types";
-import { getRelativePosition, getOffsetPosition } from "./positionHelper";
+import { toPx, getRelativePosition, getOffsetPosition } from "./positionHelper";
 import React from "react";
+import { BehaviorContext } from "./BehaviorContext";
 
 //export class Stickable extends Behavior {
 export class Stickable extends React.Component {
+  setBehaviorContext = null;
   containerPos = null;
   stickyContainerRect = null;
 
@@ -15,11 +16,6 @@ export class Stickable extends React.Component {
 
   isSticky = false;
 
-  // render(containerRef, children) {
-  //   this.containerRef = containerRef;
-  //   return <div ref={this.stickyContainerRef}>{children}</div>;
-  // }
-
   constructor(props) {
     super(props);
     //this.tryCalculateStickyRect = throttle(this.tryCalculateStickyRect, 100);
@@ -27,6 +23,13 @@ export class Stickable extends React.Component {
   }
 
   render() {
+    return (
+      <BehaviorContext.Consumer children={this.renderWithBehaviorContext} />
+    );
+  }
+
+  renderWithBehaviorContext = ({ setBehaviorContext }) => {
+    this.setBehaviorContext = setBehaviorContext;
     return (
       <React.Fragment>
         <div ref={this.stickyContainerRef}>{this.props.children}</div>
@@ -36,7 +39,7 @@ export class Stickable extends React.Component {
         />
       </React.Fragment>
     );
-  }
+  };
 
   mounted(containerRef) {
     this.containerRef = containerRef;
@@ -90,8 +93,8 @@ export class Stickable extends React.Component {
       const stickyContainerRect = this.stickyContainerRect;
 
       Object.assign(this.sizeHelperRef.current.style, {
-        width: this.toPx(stickyContainerRect.right - stickyContainerRect.left),
-        height: this.toPx(stickyContainerRect.bottom - stickyContainerRect.top)
+        width: toPx(stickyContainerRect.right - stickyContainerRect.left),
+        height: toPx(stickyContainerRect.bottom - stickyContainerRect.top)
       });
     }
   }
@@ -104,12 +107,6 @@ export class Stickable extends React.Component {
     const scrollTop = document.documentElement.scrollTop;
     const { top: containerTop } = this.containerPos;
 
-    // if (scrollTop >= staticTop) {
-    //   this.stick();
-    // } else if (scrollTop < staticTop) {
-    //   this.unstick();
-    // }
-
     if (scrollTop > containerTop) {
       if (!this.isSticky || forceUpdate) {
         this.tryCalculateStickyRect(
@@ -118,27 +115,15 @@ export class Stickable extends React.Component {
         this.stick();
       }
     } else {
-      if (this.isSticky || forceUpdate) {
+      // No need to check forceUpdate as we're just resetting the styles - not updating to new values
+      if (this.isSticky) {
         this.unstick();
       }
     }
   }
 
   stick() {
-    // const { scrollLeft, scrollTop } = document.documentElement;
     const { top: containerTop } = this.containerPos;
-
-    // const leftPx = scrollLeft > left ? this.toPx(scrollLeft - left) : "0";
-    // const topPx = scrollTop > top ? this.toPx(scrollTop - top) : "0";
-
-    // Object.assign(this.containerRef.current.style, {
-    //   transform: "translate(" + leftTx + ", " + topTx + ")"
-    // });
-
-    // Object.assign(this.containerRef.current.style, {
-    //   position: "width",
-    //   transform: "translate(" + leftPx + ", " + topPx + ")"
-    // });
 
     // show the helper so the container doesn't collapse after we make the
     // sticky container 'sticky' and move out of the flow
@@ -149,28 +134,23 @@ export class Stickable extends React.Component {
     // take the sticky container out of the flow using 'fixed' css and
     // re-position to counteract the container's static position
     //const leftPx = this.toPx(-left);
-    const topPx = this.toPx(-containerTop);
+    const topPx = toPx(-containerTop);
 
     Object.assign(this.stickyContainerRef.current.style, {
       position: "fixed",
-      //transform: "translate(" + leftPx + ", " + topPx + ")"
       // we're only doing Y, because we're only implementing
       // vertical scroll sticky behavior
       transform: "translateY(" + topPx + ")"
     });
 
     this.isSticky = true;
-  }
 
-  toPx(value) {
-    return Math.floor(value * 10) / 10 + "px";
+    if (this.setBehaviorContext) {
+      this.setBehaviorContext({ animationsEnabled: false });
+    }
   }
 
   unstick() {
-    // Object.assign(this.containerRef.current.style, {
-    //   transform: null
-    // });
-
     Object.assign(this.sizeHelperRef.current.style, {
       display: "none"
     });
@@ -182,5 +162,9 @@ export class Stickable extends React.Component {
     });
 
     this.isSticky = false;
+
+    if (this.setBehaviorContext) {
+      this.setBehaviorContext({ animationsEnabled: true });
+    }
   }
 }
