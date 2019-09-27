@@ -8,6 +8,52 @@ const childStyle = {
   padding: "20px"
 };
 
+const subscribers = new Map();
+const mediator = {
+  sub: (name, callback) => {
+    let subs = subscribers.get(name);
+    if (!subs) {
+      subscribers.set(name, (subs = []));
+    }
+    subs.push(callback);
+  },
+  pub: (name, ...args) => {
+    const subs = subscribers.get(name);
+    if (subs) {
+      subs.forEach(sub => sub(...args));
+    }
+  }
+};
+
+function changeOption(e) {
+  const json = JSON.parse(e.target.getAttribute("data-json"));
+  mediator.pub("updateState", json.key, json.prop, json.value);
+}
+
+function commonButton(text, key, prop, value) {
+  return (
+    <button
+      data-json={JSON.stringify({ key, prop, value })}
+      onClick={changeOption}
+    >
+      {text}
+    </button>
+  );
+}
+
+function commonFunctions(childKey) {
+  return (
+    <React.Fragment>
+      <div>
+        {commonButton("Stick", childKey, "stick", true)}
+        {commonButton("Animate", childKey, "animate", true)}
+        {commonButton("No-Stick", childKey, "stick", false)}
+        {commonButton("No-Animate", childKey, "animate", false)}
+      </div>
+    </React.Fragment>
+  );
+}
+
 const gridConfig = {
   gridStyle: {
     position: "relative",
@@ -31,7 +77,7 @@ const gridConfig = {
             //transform: "translate(50px, 50px)"
           }}
         >
-          Child 1
+          Child 1{commonFunctions("child1")}
         </div>
       ),
       animate: true,
@@ -46,7 +92,7 @@ const gridConfig = {
           id="child2"
           style={{ ...childStyle, background: "rgba(255,255,0,.2)" }}
         >
-          Child 2
+          Child 2{commonFunctions("child2")}
         </div>
       ),
       animate: true,
@@ -67,7 +113,7 @@ const gridConfig = {
             width: "400px"
           }}
         >
-          Child 3
+          Child 3{commonFunctions("child3")}
         </div>
       ),
       animate: true,
@@ -93,7 +139,7 @@ const gridConfig = {
             background: "rgba(255,0,0,.2)"
           }}
         >
-          Child 4
+          Child 4{commonFunctions("child4")}
         </div>
       ),
       animate: true,
@@ -118,7 +164,7 @@ const gridConfig = {
             background: "rgba(255,255,0,.2)"
           }}
         >
-          Child 5
+          Child 5{commonFunctions("child5")}
         </div>
       ),
       row: 4,
@@ -141,48 +187,52 @@ const gridConfig = {
 //   }
 // };
 
-const swapColsAndRowsConfig = {
-  ...gridConfig,
-  children: [
-    // swap child 1 & 2
-    {
-      ...gridConfig.children[0],
-      col: gridConfig.children[1].col
-    },
-    {
-      ...gridConfig.children[1],
-      col: gridConfig.children[0].col
-    },
-    // swap child 3 & 4
-    {
-      ...gridConfig.children[2],
-      row: gridConfig.children[3].row
-    },
-    {
-      ...gridConfig.children[3],
-      row: gridConfig.children[2].row
-    },
-    gridConfig.children[4]
-  ]
-};
+function swapColsAndRowsConfig(gridConfig) {
+  return {
+    ...gridConfig,
+    children: [
+      // swap child 1 & 2
+      {
+        ...gridConfig.children[0],
+        col: gridConfig.children[1].col
+      },
+      {
+        ...gridConfig.children[1],
+        col: gridConfig.children[0].col
+      },
+      // swap child 3 & 4
+      {
+        ...gridConfig.children[2],
+        row: gridConfig.children[3].row
+      },
+      {
+        ...gridConfig.children[3],
+        row: gridConfig.children[2].row
+      },
+      gridConfig.children[4]
+    ]
+  };
+}
 
-const swapOneChild = {
-  ...gridConfig,
-  children: [
-    gridConfig.children[0],
-    gridConfig.children[1],
-    // swap child 3 & 4
-    {
-      ...gridConfig.children[2],
-      row: gridConfig.children[3].row
-    },
-    {
-      ...gridConfig.children[3],
-      row: gridConfig.children[2].row
-    },
-    gridConfig.children[4]
-  ]
-};
+function swapOneChild(gridConfig) {
+  return {
+    ...gridConfig,
+    children: [
+      gridConfig.children[0],
+      gridConfig.children[1],
+      // swap child 3 & 4
+      {
+        ...gridConfig.children[2],
+        row: gridConfig.children[3].row
+      },
+      {
+        ...gridConfig.children[3],
+        row: gridConfig.children[2].row
+      },
+      gridConfig.children[4]
+    ]
+  };
+}
 
 export class LayoutApp extends React.Component {
   layoutRef = React.createRef();
@@ -196,11 +246,13 @@ export class LayoutApp extends React.Component {
       this.setState({ gridConfig })
     );
     props.button2.addEventListener("click", () =>
-      this.setState({ gridConfig: swapColsAndRowsConfig })
+      this.setState({
+        gridConfig: swapColsAndRowsConfig(this.state.gridConfig)
+      })
     );
     props.button3.addEventListener(
       "click",
-      () => this.setState({ gridConfig: swapOneChild })
+      () => this.setState({ gridConfig: swapOneChild(this.state.gridConfig) })
       //this.setState({ gridConfig: gridConfig2 })
     );
     props.button4.addEventListener("click", () =>
@@ -214,6 +266,20 @@ export class LayoutApp extends React.Component {
         this.layoutRef.current.getChildWrapperRef("child4").current.tagName
       ])
     );
+
+    mediator.sub("updateState", (childKey, propName, value) => {
+      const stateConfig = this.state.gridConfig;
+      var config = { ...stateConfig, children: [...stateConfig.children] };
+      config.children.forEach((child, index) => {
+        if (child.key === childKey) {
+          config.children[index] = {
+            ...child,
+            [propName]: value
+          };
+        }
+      });
+      this.setState({ gridConfig: config });
+    });
   }
 
   render() {

@@ -27,6 +27,7 @@ export class Animatable extends React.Component {
   containerRef;
   //behaviorContext = null;
   animationsEnabled = true;
+  behaviorContext = null;
 
   // beforeRender(containerRef) {
   //   // in-case things have shifted/resized after the previous render/mount/update
@@ -48,15 +49,29 @@ export class Animatable extends React.Component {
     );
   }
 
-  renderWithBehaviorContext = behaviorContext => {
-    this.animationsEnabled = behaviorContext.animationsEnabled;
-    behaviorContext.subscribe(this.behaviorContextChanged);
+  componentWillUnmount() {
+    clearTimeout(this.resetTransitionTimeout);
+    if (this.behaviorContext) {
+      this.behaviorContext.unsubscribe(this.behaviorContextChanged);
+    }
+  }
 
+  componentDidMount() {
+    if (this.behaviorContext) {
+      this.behaviorContext.subscribe(this.behaviorContextChanged);
+    }
+  }
+
+  renderWithBehaviorContext = behaviorContext => {
+    this.behaviorContextChanged(behaviorContext);
+    behaviorContext.subscribe(this.behaviorContextChanged);
     return this.props.children;
   };
 
-  behaviorContextChanged = ({ animationsEnabled }) =>
-    (this.animationsEnabled = animationsEnabled);
+  behaviorContextChanged = behaviorContext => {
+    this.behaviorContext = behaviorContext;
+    this.animationsEnabled = behaviorContext.animationsEnabled;
+  };
 
   mounted(containerRef) {
     this.containerRef = containerRef;

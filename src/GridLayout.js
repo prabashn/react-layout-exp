@@ -68,6 +68,6 @@ export class GridLayout extends React.Component {
   );
 
   getChildWrapperRef(key) {
-    return this.childContainerElementRef.get(key);
+    return this.getChildRef(key);
   }
 }

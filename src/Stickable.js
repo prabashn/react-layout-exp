@@ -28,6 +28,11 @@ export class Stickable extends React.Component {
     );
   }
 
+  componentWillUnmount() {
+    window.removeEventListener("scroll", this.onScroll);
+    window.removeEventListener("resize", this.onResize);
+  }
+
   renderWithBehaviorContext = ({ setBehaviorContext }) => {
     this.setBehaviorContext = setBehaviorContext;
     return (
@@ -45,11 +50,17 @@ export class Stickable extends React.Component {
     this.containerRef = containerRef;
     this.tryCalculateContainerRect();
     this.calculateStick();
-    window.addEventListener("scroll", () => this.calculateStick());
-    window.addEventListener("resize", () =>
-      this.tryCalculateStickyRect(this.isSticky)
-    );
   }
+
+  onScroll = () => {
+    this.calculateStick();
+  };
+
+  onResize = () => {
+    this.tryCalculateContainerRect();
+    this.tryCalculateStickyRect(this.isSticky);
+    this.calculateStick(true);
+  };
 
   updated(containerRef) {
     this.containerRef = containerRef;
@@ -60,6 +71,8 @@ export class Stickable extends React.Component {
   componentDidMount() {
     this.tryCalculateContainerRect();
     this.tryCalculateStickyRect();
+    window.addEventListener("scroll", this.onScroll);
+    window.addEventListener("resize", this.onResize);
   }
 
   componentDidUpdate() {

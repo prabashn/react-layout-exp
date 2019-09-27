@@ -28,6 +28,12 @@ export class BehaviorCollection extends React.Component {
         if (!subscribers.indexOf(callback)) {
           subscribers.push(callback);
         }
+      },
+      unsubscribe: callback =>{
+        const index = subscribers.indexOf(callback);
+        if (index >= 0) {
+          subscribers.splice(index, 1);
+        }
       }
     });
   }
