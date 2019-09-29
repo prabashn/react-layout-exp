@@ -55,7 +55,8 @@ function commonFunctions(childKey) {
 }
 
 const gridConfig = {
-  gridStyle: {
+  layoutType: "grid",
+  containerStyle: {
     position: "relative",
     display: "grid",
     //height: "calc(100vh - 100px)", // 16px to account for some random margin added by the sandbox.io
@@ -97,21 +98,21 @@ const gridConfig = {
       row: 1,
       col: 1
     },
-    {
-      key: "child2",
-      component: (
-        <div
-          id="child2"
-          style={{ ...childStyle, background: "rgba(255,255,0,.2)" }}
-        >
-          Child 2{commonFunctions("child2")}
-        </div>
-      ),
-      animate: true,
-      //stick: true,
-      row: 1,
-      col: 2
-    },
+    // {
+    //   key: "child2",
+    //   component: (
+    //     <div
+    //       id="child2"
+    //       style={{ ...childStyle, background: "rgba(255,255,0,.2)" }}
+    //     >
+    //       Child 2{commonFunctions("child2")}
+    //     </div>
+    //   ),
+    //   animate: true,
+    //   //stick: true,
+    //   row: 1,
+    //   col: 2
+    // },
     {
       key: "child3",
       component: (
@@ -194,6 +195,127 @@ const gridConfig = {
         //alignSelf: "end"
         //"align-self": "end"
       }
+    },
+    {
+      key: "child6",
+      layoutType: "stack-horizontal",
+      row: 1,
+      col: 2,
+      containerStyle: {
+        display: "flex"
+      },
+      children: [
+        {
+          key: "child61",
+          component: (
+            <div
+              id="child61"
+              style={{
+                ...childStyle,
+                height: "20px",
+                background: "rgba(0,255,255,.2)"
+              }}
+            >
+              Child 61
+            </div>
+          ),
+          childStyle: {
+            flexGrow: 1
+          }
+        },
+        {
+          key: "child62",
+          component: (
+            <div
+              id="child62"
+              style={{
+                ...childStyle,
+                height: "20px",
+                background: "rgba(0,255,255,.2)"
+              }}
+            >
+              Child 62
+            </div>
+          ),
+          childStyle: {
+            flexGrow: 1
+          }
+        },
+        {
+          key: "child63",
+          component: (
+            <div
+              id="child63"
+              style={{
+                ...childStyle,
+                height: "20px",
+                background: "rgba(0,255,255,.2)"
+              }}
+            >
+              Child 63
+            </div>
+          ),
+          childStyle: {
+            flexGrow: 1
+          }
+        },
+        {
+          key: "child7",
+          layoutType: "stack-horizontal",
+          row: 1,
+          col: 2,
+          containerStyle: {
+            flexGrow: 1
+          },
+          children: [
+            {
+              key: "child71",
+              component: (
+                <div
+                  id="child71"
+                  style={{
+                    border: "2px solid black",
+                    height: "20px",
+                    background: "rgba(0,255,255,.2)"
+                  }}
+                >
+                  Child 71
+                </div>
+              )
+            },
+            {
+              key: "child72",
+              component: (
+                <div
+                  id="child72"
+                  style={{
+                    border: "2px solid black",
+                    height: "20px",
+                    background: "rgba(0,255,255,.2)"
+                  }}
+                >
+                  Child 72
+                </div>
+              )
+            },
+            {
+              key: "child73",
+              component: (
+                <div
+                  id="child73"
+                  style={{
+                    border: "2px solid black",
+                    height: "20px",
+                    background: "rgba(0,255,255,.2)"
+                  }}
+                >
+                  Child 73
+                </div>
+              )
+            }
+          ]
+        }
+      ]
     }
   ]
 };

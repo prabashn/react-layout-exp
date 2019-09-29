@@ -6,11 +6,27 @@ import { memoize } from "lodash-es";
 
 export class GridLayout extends React.Component {
   render() {
-    const gridConfig = this.props.gridConfig;
+    return this.renderContainer(this.props.gridConfig);
+  }
 
+  renderContainer(layoutConfig) {
+    const { layoutType } = layoutConfig;
+    return layoutType === "grid"
+      ? this.renderGrid(layoutConfig)
+      : layoutType === "stack-horizontal"
+      ? this.renderStack(layoutConfig)
+      : null;
+  }
+
+  renderGrid(layoutConfig) {
     return (
-      <div style={gridConfig.gridStyle} ref={this.rootRef}>
-        {gridConfig.children.map((childConfig, index) => {
+      <div style={layoutConfig.containerStyle}>
+        {layoutConfig.children.map(childConfig => {
+          const { layoutType } = childConfig;
+          if (layoutType) {
+            return this.renderContainer(childConfig);
+          }
+
           const styleObj = {
             gridRow: childConfig.row + " / span " + (childConfig.rowSpan || 1),
             gridColumn:
@@ -18,35 +34,26 @@ export class GridLayout extends React.Component {
             ...childConfig.childStyle
           };
 
-          const { key = index } = childConfig;
-          let behaviors = this.getChildBehaviors(key, childConfig);
-          let childRef = this.getChildRef(key);
-
-          if (!behaviors.length) {
-            return (
-              <div key={key} style={styleObj} ref={childRef}>
-                {childConfig.component}
-              </div>
-            );
-          }
-
-          return (
-            <BehaviorCollection
-              getCompanionRef={this.getChildRef}
-              behaviors={behaviors}
-              key={key}
-              style={styleObj}
-              containerRef={childRef}
-            >
-              {childConfig.component}
-            </BehaviorCollection>
-          );
+          return this.renderChild(childConfig, styleObj);
         })}
       </div>
     );
   }
 
-  getChildRef = memoize(_childKey => React.createRef());
+  renderStack(layoutConfig) {
+    return (
+      <div style={layoutConfig.containerStyle}>
+        {layoutConfig.children.map(childConfig => {
+          const { layoutType } = childConfig;
+          if (layoutType) {
+            return this.renderContainer(childConfig);
+          }
+
+          return this.renderChild(childConfig, childConfig.childStyle);
+        })}
+      </div>
+    );
+  }
 
   getChildBehaviors(childKey, childConfig) {
     const { animate, stick } = childConfig;
@@ -63,6 +70,34 @@ export class GridLayout extends React.Component {
       return behaviors;
     });
   }
+
+  renderChild(childConfig, styleObj) {
+    const { key } = childConfig;
+    let behaviors = this.getChildBehaviors(key, childConfig);
+    let childRef = this.getChildRef(key);
+
+    if (!behaviors.length) {
+      return (
+        <div key={key} style={styleObj} ref={childRef}>
+          {childConfig.component}
+        </div>
+      );
+    }
+
+    return (
+      <BehaviorCollection
+        getCompanionRef={this.getChildRef}
+        behaviors={behaviors}
+        key={key}
+        style={styleObj}
+        containerRef={childRef}
+      >
+        {childConfig.component}
+      </BehaviorCollection>
+    );
+  }
+
+  getChildRef = memoize(_childKey => React.createRef());
 
   getCachedBehaviors = memoize(
     (_keys, getBehaviors) => getBehaviors(),
