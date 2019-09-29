@@ -7,6 +7,7 @@ import { BehaviorContext } from "./BehaviorContext";
 //export class Stickable extends Behavior {
 export class Stickable extends React.Component {
   setBehaviorContext = null;
+  behaviorContext = null;
   containerPos = null;
   stickyContainerRect = null;
 
@@ -33,8 +34,10 @@ export class Stickable extends React.Component {
     window.removeEventListener("resize", this.onResize);
   }
 
-  renderWithBehaviorContext = ({ setBehaviorContext }) => {
-    this.setBehaviorContext = setBehaviorContext;
+  renderWithBehaviorContext = behaviorContext => {
+    this.behaviorContext = behaviorContext;
+    this.setBehaviorContext = behaviorContext.setBehaviorContext;
+
     return (
       <React.Fragment>
         <div ref={this.stickyContainerRef}>{this.props.children}</div>
@@ -46,12 +49,6 @@ export class Stickable extends React.Component {
     );
   };
 
-  mounted(containerRef) {
-    this.containerRef = containerRef;
-    this.tryCalculateContainerRect();
-    this.calculateStick();
-  }
-
   onScroll = () => {
     this.calculateStick();
   };
@@ -62,8 +59,30 @@ export class Stickable extends React.Component {
     this.calculateStick(true);
   };
 
+  getContainerRef(containerRef, behaviorContext) {
+    var ref = null;
+    if (this.props.stickCompanion) {
+      if (behaviorContext && behaviorContext.getCompanionRef) {
+        ref = behaviorContext.getCompanionRef(this.props.stickCompanion);
+      }
+    }
+    return ref || containerRef;
+  }
+
+  mounted(containerRef) {
+    this.containerRef = this.getContainerRef(
+      containerRef,
+      this.behaviorContext
+    );
+    this.tryCalculateContainerRect();
+    this.calculateStick();
+  }
+
   updated(containerRef) {
-    this.containerRef = containerRef;
+    this.containerRef = this.getContainerRef(
+      containerRef,
+      this.behaviorContext
+    );
     this.tryCalculateContainerRect();
     this.calculateStick(true);
   }

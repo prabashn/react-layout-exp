@@ -24,12 +24,13 @@ export class BehaviorCollection extends React.Component {
       setBehaviorContext: this.setBehaviorContext,
       animationsEnabled: true,
       subscribers,
+      getCompanionRef: props.getCompanionRef || (companionName => {}),
       subscribe: callback => {
         if (!subscribers.indexOf(callback)) {
           subscribers.push(callback);
         }
       },
-      unsubscribe: callback =>{
+      unsubscribe: callback => {
         const index = subscribers.indexOf(callback);
         if (index >= 0) {
           subscribers.splice(index, 1);
@@ -50,12 +51,16 @@ export class BehaviorCollection extends React.Component {
 
     var WrappedComponent = children;
 
-    behaviors.forEach((Behavior, i) => {
+    behaviors.forEach((behavior, i) => {
       const behaviorRef =
         this.behaviorRefs[i] || (this.behaviorRefs[i] = React.createRef());
 
+      const { class: Behavior, props } = behavior;
+
       WrappedComponent = (
-        <Behavior ref={behaviorRef}>{WrappedComponent}</Behavior>
+        <Behavior ref={behaviorRef} {...props}>
+          {WrappedComponent}
+        </Behavior>
       );
     });
 

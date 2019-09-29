@@ -67,6 +67,18 @@ const gridConfig = {
   },
   children: [
     {
+      key: "top-sticky",
+      component: <div id="top-sticky" style={{ visibility: "hidden" }} />,
+      row: 1,
+      col: 1
+    },
+    {
+      key: "mid-sticky",
+      component: <div id="mid-sticky" style={{ visibility: "hidden" }} />,
+      row: 2,
+      col: 1
+    },
+    {
       key: "child1",
       component: (
         <div
@@ -117,6 +129,7 @@ const gridConfig = {
         </div>
       ),
       animate: true,
+      //stickCompanion: "top-sticky",
       stick: true,
       row: 2,
       col: 1,
@@ -144,6 +157,8 @@ const gridConfig = {
       ),
       animate: true,
       stick: true,
+      // stickCompanion: "top-sticky",
+      stickCompanion: "mid-sticky",
       row: 3,
       col: 1,
       colSpan: 2,
@@ -161,16 +176,21 @@ const gridConfig = {
           style={{
             ...childStyle,
             height: "100vh",
+            width: "95vw",
             background: "rgba(255,255,0,.2)"
           }}
         >
           Child 5{commonFunctions("child5")}
         </div>
       ),
+      stick: true,
+      stickCompanion: "child4",
+      //stickCompanion: "top-sticky",
       row: 4,
       col: 1,
       colSpan: 2,
       childStyle: {
+        justifySelf: "center"
         //alignSelf: "end"
         //"align-self": "end"
       }
