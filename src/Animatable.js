@@ -26,7 +26,7 @@ export class Animatable extends React.Component {
   resetTransitionTimeout = null;
   containerRef;
   //behaviorContext = null;
-  animationsEnabled = true;
+  ///animationsEnabled = true;
   behaviorContext = null;
 
   // beforeRender(containerRef) {
@@ -70,7 +70,7 @@ export class Animatable extends React.Component {
 
   behaviorContextChanged = behaviorContext => {
     this.behaviorContext = behaviorContext;
-    this.animationsEnabled = behaviorContext.animationsEnabled;
+    //this.animationsEnabled = behaviorContext.animationsEnabled;
   };
 
   mounted(containerRef) {
@@ -122,7 +122,7 @@ export class Animatable extends React.Component {
       return;
     }
 
-    if (!this.animationsEnabled) {
+    if (this.behaviorContext && !this.behaviorContext.animationsEnabled) {
       console.log("animations disabled!");
       this.setStyle(containerRef, removeTransformStyle);
       return;
@@ -136,6 +136,13 @@ export class Animatable extends React.Component {
     if (!revLeft && !revTop) {
       console.log("nothing to animate!");
       return;
+    }
+
+    // TODO: make sure this is not triggering recursive update!
+    if (this.behaviorContext) {
+      this.behaviorContext.setBehaviorContext({
+        animationsRunning: true
+      });
     }
 
     const transform = "translate(" + toPx(revLeft) + ", " + toPx(revTop) + ")";
@@ -156,10 +163,15 @@ export class Animatable extends React.Component {
 
       // save the timer handle so we can cancel it if we get another request to reposition.
       // Otherwise this timer will kick in the middle of that animation and mess up the animation.
-      this.resetTransitionTimeout = setTimeout(
-        () => this.setStyle(containerRef, removeTransformStyle),
-        transitionTimeMs
-      );
+      this.resetTransitionTimeout = setTimeout(() => {
+        this.setStyle(containerRef, removeTransformStyle);
+        // TODO: make sure this is not triggering recursive update!
+        if (this.behaviorContext) {
+          this.behaviorContext.setBehaviorContext({
+            animationsRunning: false
+          });
+        }
+      }, transitionTimeMs);
     }, 0);
 
     console.log(

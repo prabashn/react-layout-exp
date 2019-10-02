@@ -56,6 +56,7 @@ function commonFunctions(childKey) {
 
 const gridConfig = {
   layoutType: "grid",
+  key: "main-grid",
   containerStyle: {
     position: "relative",
     display: "grid",
@@ -67,18 +68,18 @@ const gridConfig = {
     // "grid-template-columns": "1fr 1fr"
   },
   children: [
-    {
-      key: "top-sticky",
-      component: <div id="top-sticky" style={{ visibility: "hidden" }} />,
-      row: 1,
-      col: 1
-    },
-    {
-      key: "mid-sticky",
-      component: <div id="mid-sticky" style={{ visibility: "hidden" }} />,
-      row: 2,
-      col: 1
-    },
+    // {
+    //   key: "top-sticky",
+    //   component: <div id="top-sticky" style={{ visibility: "hidden" }} />,
+    //   row: 1,
+    //   col: 1
+    // },
+    // {
+    //   key: "mid-sticky",
+    //   component: <div id="mid-sticky" style={{ visibility: "hidden" }} />,
+    //   row: 2,
+    //   col: 1
+    // },
     {
       key: "child1",
       component: (
@@ -93,7 +94,7 @@ const gridConfig = {
           Child 1{commonFunctions("child1")}
         </div>
       ),
-      animate: true,
+      //animate: true,
       //stick: true,
       row: 1,
       col: 1
@@ -124,14 +125,18 @@ const gridConfig = {
             background: "rgba(0,0,255,.2)",
             //margin: "10px 30px"
             width: "400px"
+            // position: "fixed",
+            // top: "0px"
           }}
         >
           Child 3{commonFunctions("child3")}
         </div>
       ),
-      animate: true,
+      //animate: true,
       //stickCompanion: "top-sticky",
-      stick: true,
+      behaviors: {
+        stick: true
+      },
       row: 2,
       col: 1,
       colSpan: 2,
@@ -156,10 +161,16 @@ const gridConfig = {
           Child 4{commonFunctions("child4")}
         </div>
       ),
-      animate: true,
-      stick: true,
+      behaviors: {
+        // animate: true,
+        stick: {
+          targetRefName: "child3",
+          targetSide: "top",
+          targetOffset: 30
+        }
+      },
       // stickCompanion: "top-sticky",
-      stickCompanion: "mid-sticky",
+      // stickCompanion: "mid-sticky",
       row: 3,
       col: 1,
       colSpan: 2,
@@ -184,9 +195,18 @@ const gridConfig = {
           Child 5{commonFunctions("child5")}
         </div>
       ),
-      stick: true,
-      stickCompanion: "child4",
-      //stickCompanion: "top-sticky",
+      behaviors: {
+        // animate: true,
+        stick: {
+          targetRefName: "child4",
+          targetSide: "bottom",
+          selfOffset: -50 //TODO: figure out why this doesn't work
+          //selfOffset: 50 // this works
+        }
+      },
+      // stick: true,
+      // stickCompanion: "child4",
+      // //stickCompanion: "top-sticky",
       row: 4,
       col: 1,
       colSpan: 2,
@@ -196,13 +216,18 @@ const gridConfig = {
         //"align-self": "end"
       }
     },
+    //*
     {
       key: "child6",
-      layoutType: "stack-horizontal",
+      layoutType: "stack",
       row: 1,
       col: 2,
       containerStyle: {
         display: "flex"
+      },
+      behaviors: {
+        // animate: true,
+        stick: true
       },
       children: [
         {
@@ -261,7 +286,7 @@ const gridConfig = {
         },
         {
           key: "child7",
-          layoutType: "stack-horizontal",
+          layoutType: "stack",
           row: 1,
           col: 2,
           containerStyle: {
@@ -317,6 +342,7 @@ const gridConfig = {
         }
       ]
     }
+    //*/
   ]
 };
 

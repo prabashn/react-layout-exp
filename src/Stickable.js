@@ -1,161 +1,96 @@
 //import { Behavior } from "./Behavior";
 import { throttle } from "lodash-es";
-import { toPx, getRelativePosition, getOffsetPosition } from "./positionHelper";
+import { toPx, getOffsetRect } from "./positionHelper";
 import React from "react";
-import { BehaviorContext } from "./BehaviorContext";
+import { Proximity } from "./Proximity";
 
 //export class Stickable extends Behavior {
-export class Stickable extends React.Component {
+export class Stickable extends Proximity {
   setBehaviorContext = null;
-  behaviorContext = null;
-  containerPos = null;
-  stickyContainerRect = null;
-
-  containerRef = null;
   stickyContainerRef = React.createRef();
   sizeHelperRef = React.createRef();
-
   isSticky = false;
 
   constructor(props) {
     super(props);
-    //this.tryCalculateStickyRect = throttle(this.tryCalculateStickyRect, 100);
     this.calculateStick = throttle(this.calculateStick, 20);
   }
 
-  render() {
-    return (
-      <BehaviorContext.Consumer children={this.renderWithBehaviorContext} />
-    );
-  }
-
-  componentWillUnmount() {
-    window.removeEventListener("scroll", this.onScroll);
-    window.removeEventListener("resize", this.onResize);
-  }
-
-  renderWithBehaviorContext = behaviorContext => {
-    this.behaviorContext = behaviorContext;
+  renderCore(behaviorContext, _selfRef) {
+    // we don't use _selfRef as we want the top behavior container as defaulted in base
     this.setBehaviorContext = behaviorContext.setBehaviorContext;
+    behaviorContext.pushInnerRef(this.stickyContainerRef);
 
     return (
       <React.Fragment>
         <div ref={this.stickyContainerRef}>{this.props.children}</div>
         <div
           ref={this.sizeHelperRef}
-          style={{ display: "none", outline: "5px solid red" }}
+          style={{ display: "none", outline: "1px solid red" }}
         />
       </React.Fragment>
     );
-  };
-
-  onScroll = () => {
-    this.calculateStick();
-  };
-
-  onResize = () => {
-    this.tryCalculateContainerRect();
-    this.tryCalculateStickyRect(this.isSticky);
-    this.calculateStick(true);
-  };
-
-  getContainerRef(containerRef, behaviorContext) {
-    var ref = null;
-    if (this.props.stickCompanion) {
-      if (behaviorContext && behaviorContext.getCompanionRef) {
-        ref = behaviorContext.getCompanionRef(this.props.stickCompanion);
-      }
-    }
-    return ref || containerRef;
   }
 
-  mounted(containerRef) {
-    this.containerRef = this.getContainerRef(
-      containerRef,
-      this.behaviorContext
-    );
-    this.tryCalculateContainerRect();
-    this.calculateStick();
+  componentWillUnmount() {
+    this.behaviorContext.popInnerRef(this.stickyContainerRef);
+    super.componentDidUpdate();
   }
 
-  updated(containerRef) {
-    this.containerRef = this.getContainerRef(
-      containerRef,
-      this.behaviorContext
-    );
-    this.tryCalculateContainerRect();
-    this.calculateStick(true);
+  onStatusChanged(status) {
+    this.calculateStick(status);
   }
 
-  componentDidMount() {
-    this.tryCalculateContainerRect();
-    this.tryCalculateStickyRect();
-    window.addEventListener("scroll", this.onScroll);
-    window.addEventListener("resize", this.onResize);
-  }
+  // // TODO: do we need these?
+  // onTargetRectChanged() {
+  //   this.calculateStick(this.status);
+  // }
 
-  componentDidUpdate() {
-    this.tryCalculateContainerRect();
-    this.tryCalculateStickyRect();
-    this.calculateStick(true);
-  }
+  // // TODO: do we need these?
+  // onSelfRectChanged() {
+  //   this.updateSizeHelper();
+  //   this.calculateStick(this.status);
+  // }
 
-  tryCalculateContainerRect() {
-    if (!this.containerRef) {
-      return;
-    }
-    //this.containerRect = getRelativePosition(this.containerRef.current);
-    this.containerPos = getOffsetPosition(this.containerRef.current);
-  }
-
-  tryCalculateStickyRect(updateSizeHelper) {
-    if (!this.stickyContainerRef) {
-      return;
-    }
-    this.stickyContainerRect = getRelativePosition(
-      this.stickyContainerRef.current
-    );
-    if (updateSizeHelper) {
-      this.updateSizeHelper();
-    }
-  }
-
-  updateSizeHelper() {
+  updateSizeHelper(sizeRect) {
     if (this.sizeHelperRef.current) {
-      const stickyContainerRect = this.stickyContainerRect;
+      // const stickyContainerRect = getOffsetRect(
+      //   this.stickyContainerRef.current
+      // );
 
       Object.assign(this.sizeHelperRef.current.style, {
-        width: toPx(stickyContainerRect.right - stickyContainerRect.left),
-        height: toPx(stickyContainerRect.bottom - stickyContainerRect.top)
+        width: toPx(sizeRect.right - sizeRect.left),
+        height: toPx(sizeRect.bottom - sizeRect.top)
       });
     }
   }
 
-  calculateStick(forceUpdate) {
-    if (!this.containerPos) {
+  calculateStick(status) {
+    // direction: top/bottom = 0, left/right = 1
+    // We only handle vertical sticky, hence the check
+    if (status.direction !== 0) {
       return;
     }
 
-    const scrollTop = document.documentElement.scrollTop;
-    const { top: containerTop } = this.containerPos;
-
-    if (scrollTop > containerTop) {
-      if (!this.isSticky || forceUpdate) {
-        this.tryCalculateStickyRect(
-          true /* since we're about to stick, update the size helper */
-        );
-        this.stick();
+    const stick = status.selfEdge < status.targetEdge;
+    if (stick) {
+      // only go through re-calculating the sticky container if our
+      // rectangles have changed -- otherwise, there's no need.
+      if (
+        !this.isSticky ||
+        //status.targetRectUpdated ||
+        status.selfRectUpdated
+      ) {
+        this.updateSizeHelper(status.selfRect);
+        this.stick(status);
       }
-    } else {
-      // No need to check forceUpdate as we're just resetting the styles - not updating to new values
-      if (this.isSticky) {
-        this.unstick();
-      }
+    } else if (this.isSticky) {
+      this.unstick();
     }
   }
 
-  stick() {
-    const { top: containerTop } = this.containerPos;
+  stick(status) {
+    //const { top: containerTop } = this.containerPos;
 
     // show the helper so the container doesn't collapse after we make the
     // sticky container 'sticky' and move out of the flow
@@ -166,13 +101,16 @@ export class Stickable extends React.Component {
     // take the sticky container out of the flow using 'fixed' css and
     // re-position to counteract the container's static position
     //const leftPx = this.toPx(-left);
-    const topPx = toPx(-containerTop);
+    const topPx = toPx(
+      status.targetEdge - status.viewportEdge - status.selfOffset
+    );
 
     Object.assign(this.stickyContainerRef.current.style, {
       position: "fixed",
       // we're only doing Y, because we're only implementing
       // vertical scroll sticky behavior
-      transform: "translateY(" + topPx + ")"
+      top: topPx
+      //transform: "translateY(" + topPx + ")"
     });
 
     this.isSticky = true;
@@ -190,7 +128,8 @@ export class Stickable extends React.Component {
     // bring back to where it was under the static container
     Object.assign(this.stickyContainerRef.current.style, {
       position: null,
-      transform: null
+      transform: null,
+      top: null
     });
 
     this.isSticky = false;

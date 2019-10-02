@@ -14,6 +14,7 @@ export class BehaviorCollection extends React.Component {
   containerRef = null;
   behaviorRefs = [];
   behaviorContext = {};
+  innerRefs = [];
 
   constructor(props) {
     super(props);
@@ -21,16 +22,43 @@ export class BehaviorCollection extends React.Component {
 
     const subscribers = [];
     this.setBehaviorContext({
+      behaviorKey: props.behaviorKey,
       setBehaviorContext: this.setBehaviorContext,
       animationsEnabled: true,
+      animationsRunning: false,
       subscribers,
-      getCompanionRef: props.getCompanionRef || (companionName => {}),
+      getLayoutChildRef: props.getLayoutChildRef || (layoutChildName => {}),
+      getContainerRef: () => this.containerRef,
+      getInnerRef: () =>
+        this.innerRefs[this.innerRefs.length - 1] || this.containerRef,
+      pushInnerRef: ref => {
+        const refIndex = this.innerRefs.indexOf(ref);
+        if (refIndex >= 0) {
+          this.innerRefs[refIndex] = ref;
+        } else {
+          this.innerRefs.push(ref);
+        }
+      },
+      popInnerRef: ref => {
+        const refIndex = this.innerRefs.indexOf(ref);
+        if (refIndex >= 0) {
+          this.innerRefs.splice(refIndex, 1);
+        }
+      },
+      getBehaviorContext: behaviorCollectionKey => {
+        if (props.getBehaviorCollectionRef) {
+          const ref = props.getBehaviorCollectionRef(behaviorCollectionKey);
+          return ref && ref.current && ref.current.behaviorContext;
+        }
+      },
       subscribe: callback => {
+        // TODO: debug why this is getting called multiple times
         if (!subscribers.indexOf(callback)) {
           subscribers.push(callback);
         }
       },
       unsubscribe: callback => {
+        // TODO: debug -- same as above
         const index = subscribers.indexOf(callback);
         if (index >= 0) {
           subscribers.splice(index, 1);
@@ -47,7 +75,19 @@ export class BehaviorCollection extends React.Component {
   };
 
   render() {
-    const { behaviors, containerRef, children, ...otherProps } = this.props;
+    const {
+      behaviors,
+      containerRef,
+      children,
+      getLayoutChildRef, // used in constructor
+      getBehaviorCollectionRef, // used in ctor
+      behaviorKey, // used in ctor
+      ...otherProps
+    } = this.props;
+
+    // reset the inner ref, so when we re-render, the new one will be set again
+    // by the innermost child behavior first
+    this.innerRef = null;
 
     var WrappedComponent = children;
 

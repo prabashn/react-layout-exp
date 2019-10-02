@@ -13,14 +13,14 @@ export class GridLayout extends React.Component {
     const { layoutType } = layoutConfig;
     return layoutType === "grid"
       ? this.renderGrid(layoutConfig)
-      : layoutType === "stack-horizontal"
+      : layoutType === "stack"
       ? this.renderStack(layoutConfig)
       : null;
   }
 
   renderGrid(layoutConfig) {
     return (
-      <div style={layoutConfig.containerStyle}>
+      <div style={layoutConfig.containerStyle} key={layoutConfig.key}>
         {layoutConfig.children.map(childConfig => {
           const { layoutType } = childConfig;
           if (layoutType) {
@@ -42,7 +42,7 @@ export class GridLayout extends React.Component {
 
   renderStack(layoutConfig) {
     return (
-      <div style={layoutConfig.containerStyle}>
+      <div style={layoutConfig.containerStyle} key={layoutConfig.key}>
         {layoutConfig.children.map(childConfig => {
           const { layoutType } = childConfig;
           if (layoutType) {
@@ -53,22 +53,6 @@ export class GridLayout extends React.Component {
         })}
       </div>
     );
-  }
-
-  getChildBehaviors(childKey, childConfig) {
-    const { animate, stick } = childConfig;
-    return this.getCachedBehaviors([childKey, animate, stick], () => {
-      const behaviors = [];
-      if (animate) {
-        behaviors.push({ class: Animatable });
-      }
-      if (stick) {
-        const { stickCompanion } = childConfig;
-        //behaviors.push(new Stickable());
-        behaviors.push({ class: Stickable, props: { stickCompanion } });
-      }
-      return behaviors;
-    });
   }
 
   renderChild(childConfig, styleObj) {
@@ -84,11 +68,16 @@ export class GridLayout extends React.Component {
       );
     }
 
+    let behaviorRef = this.getBehaviorCollectionRef(key);
+
     return (
       <BehaviorCollection
-        getCompanionRef={this.getChildRef}
+        ref={behaviorRef}
+        getBehaviorCollectionRef={this.getBehaviorCollectionRef}
+        getLayoutChildRef={this.getChildRef}
         behaviors={behaviors}
         key={key}
+        behaviorKey={key}
         style={styleObj}
         containerRef={childRef}
       >
@@ -97,7 +86,25 @@ export class GridLayout extends React.Component {
     );
   }
 
+  getChildBehaviors(childKey, childConfig) {
+    const { behaviors: { animate, stick } = {} } = childConfig;
+    return this.getCachedBehaviors([childKey, animate, stick], () => {
+      const behaviors = [];
+      if (animate) {
+        let props = typeof animate === "object" ? animate : undefined;
+        behaviors.push({ class: Animatable, props });
+      }
+      if (stick) {
+        let props = typeof stick === "object" ? stick : undefined;
+        //behaviors.push(new Stickable());
+        behaviors.push({ class: Stickable, props });
+      }
+      return behaviors;
+    });
+  }
+
   getChildRef = memoize(_childKey => React.createRef());
+  getBehaviorCollectionRef = memoize(_childKey => React.createRef());
 
   getCachedBehaviors = memoize(
     (_keys, getBehaviors) => getBehaviors(),
