@@ -189,7 +189,7 @@ const gridConfig = {
             ...childStyle,
             height: "100vh",
             width: "95vw",
-            marginTop: "50px", // better to use this than offsets
+            marginTop: "10px", // better to use this than offsets
             background: "rgba(255,255,0,.2)"
           }}
         >
@@ -199,16 +199,13 @@ const gridConfig = {
       behaviors: {
         // animate: true,
         stick: {
-          targetRefName: "child4",
+          targetRefName: "child3",
           targetSide: "bottom"
           //selfOffset: -50 //TODO: figure out why this doesn't work
           //selfOffset: 50 // this works
           //targetOffset: 50
         }
       },
-      // stick: true,
-      // stickCompanion: "child4",
-      // //stickCompanion: "top-sticky",
       row: 4,
       col: 1,
       colSpan: 2,
@@ -224,10 +221,10 @@ const gridConfig = {
       key: "child6",
       row: 1,
       col: 2,
-      behaviors: {
-        // animate: true,
-        stick: true
-      },
+      // behaviors: {
+      //   // animate: true,
+      //   stick: true
+      // },
 
       // container info
       layoutType: "stack",
@@ -269,6 +266,9 @@ const gridConfig = {
           childStyle: {
             flexGrow: 1
           }
+          // behaviors: {
+          //   stick: true
+          // }
         },
         {
           key: "child63",
@@ -294,6 +294,10 @@ const gridConfig = {
           col: 2,
           containerStyle: {
             flexGrow: 1
+          },
+          behaviors: {
+            // animate: true,
+            stick: true
           },
           children: [
             {
