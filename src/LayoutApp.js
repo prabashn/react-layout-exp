@@ -84,7 +84,6 @@ const gridConfig = {
       key: "child1",
       component: (
         <div
-          id="child1"
           style={{
             ...childStyle,
             background: "rgba(0,255,0,.2)"
@@ -103,7 +102,6 @@ const gridConfig = {
     //   key: "child2",
     //   component: (
     //     <div
-    //       id="child2"
     //       style={{ ...childStyle, background: "rgba(255,255,0,.2)" }}
     //     >
     //       Child 2{commonFunctions("child2")}
@@ -118,7 +116,6 @@ const gridConfig = {
       key: "child3",
       component: (
         <div
-          id="child3"
           style={{
             ...childStyle,
             height: "200px",
@@ -135,7 +132,12 @@ const gridConfig = {
       //animate: true,
       //stickCompanion: "top-sticky",
       behaviors: {
-        stick: true
+        stick: {
+          // TODO: this does not work, as child6 appears later in the tree
+          //  there seems to be problems when a referenced child apepars later
+          // targetRefName: "child6",
+          // targetSide: "bottom"
+        }
       },
       row: 2,
       col: 1,
@@ -150,7 +152,6 @@ const gridConfig = {
       key: "child4",
       component: (
         <div
-          id="child4"
           style={{
             ...childStyle,
             height: "10vh",
@@ -184,11 +185,11 @@ const gridConfig = {
       key: "child5",
       component: (
         <div
-          id="child5"
           style={{
             ...childStyle,
             height: "100vh",
             width: "95vw",
+            marginTop: "50px", // better to use this than offsets
             background: "rgba(255,255,0,.2)"
           }}
         >
@@ -199,9 +200,10 @@ const gridConfig = {
         // animate: true,
         stick: {
           targetRefName: "child4",
-          targetSide: "bottom",
-          selfOffset: -50 //TODO: figure out why this doesn't work
+          targetSide: "bottom"
+          //selfOffset: -50 //TODO: figure out why this doesn't work
           //selfOffset: 50 // this works
+          //targetOffset: 50
         }
       },
       // stick: true,
@@ -218,23 +220,26 @@ const gridConfig = {
     },
     //*
     {
+      // child info of nested-container
       key: "child6",
-      layoutType: "stack",
       row: 1,
       col: 2,
-      containerStyle: {
-        display: "flex"
-      },
       behaviors: {
         // animate: true,
         stick: true
+      },
+
+      // container info
+      layoutType: "stack",
+      containerStyle: {
+        display: "flex",
+        width: "50vw"
       },
       children: [
         {
           key: "child61",
           component: (
             <div
-              id="child61"
               style={{
                 ...childStyle,
                 height: "20px",
@@ -252,7 +257,6 @@ const gridConfig = {
           key: "child62",
           component: (
             <div
-              id="child62"
               style={{
                 ...childStyle,
                 height: "20px",
@@ -270,7 +274,6 @@ const gridConfig = {
           key: "child63",
           component: (
             <div
-              id="child63"
               style={{
                 ...childStyle,
                 height: "20px",
@@ -297,7 +300,6 @@ const gridConfig = {
               key: "child71",
               component: (
                 <div
-                  id="child71"
                   style={{
                     border: "2px solid black",
                     height: "20px",
@@ -312,7 +314,6 @@ const gridConfig = {
               key: "child72",
               component: (
                 <div
-                  id="child72"
                   style={{
                     border: "2px solid black",
                     height: "20px",
@@ -327,7 +328,6 @@ const gridConfig = {
               key: "child73",
               component: (
                 <div
-                  id="child73"
                   style={{
                     border: "2px solid black",
                     height: "20px",

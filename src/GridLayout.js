@@ -10,60 +10,85 @@ export class GridLayout extends React.Component {
   }
 
   renderContainer(layoutConfig) {
-    const { layoutType } = layoutConfig;
+    const { layoutType, children } = layoutConfig;
     return layoutType === "grid"
-      ? this.renderGrid(layoutConfig)
+      ? this.renderContainerCore(
+          layoutConfig,
+          this.renderGridChildren(children)
+        )
       : layoutType === "stack"
-      ? this.renderStack(layoutConfig)
+      ? this.renderContainerCore(
+          layoutConfig,
+          this.renderStackChildren(children)
+        )
       : null;
   }
 
-  renderGrid(layoutConfig) {
-    return (
-      <div style={layoutConfig.containerStyle} key={layoutConfig.key}>
-        {layoutConfig.children.map(childConfig => {
-          const { layoutType } = childConfig;
-          if (layoutType) {
-            return this.renderContainer(childConfig);
-          }
+  renderGridChildren(children) {
+    return children.map(childConfig => {
+      const styleObj = {
+        gridRow: childConfig.row + " / span " + (childConfig.rowSpan || 1),
+        gridColumn: childConfig.col + " / span " + (childConfig.colSpan || 1),
+        ...childConfig.childStyle
+      };
 
-          const styleObj = {
-            gridRow: childConfig.row + " / span " + (childConfig.rowSpan || 1),
-            gridColumn:
-              childConfig.col + " / span " + (childConfig.colSpan || 1),
-            ...childConfig.childStyle
-          };
-
-          return this.renderChild(childConfig, styleObj);
-        })}
-      </div>
-    );
+      return this.renderChild(childConfig, styleObj);
+    });
   }
 
-  renderStack(layoutConfig) {
-    return (
-      <div style={layoutConfig.containerStyle} key={layoutConfig.key}>
-        {layoutConfig.children.map(childConfig => {
-          const { layoutType } = childConfig;
-          if (layoutType) {
-            return this.renderContainer(childConfig);
-          }
-
-          return this.renderChild(childConfig, childConfig.childStyle);
-        })}
-      </div>
-    );
+  renderStackChildren(children) {
+    return children.map(childConfig => {
+      return this.renderChild(childConfig, childConfig.childStyle);
+    });
   }
 
   renderChild(childConfig, styleObj) {
-    const { key } = childConfig;
-    let behaviors = this.getChildBehaviors(key, childConfig);
+    const { layoutType, key, behaviors } = childConfig;
+
+    // check if we're trying to render a child that's also another container.
+    // If so, we still need to render it as a normal component with the wrapper
+    // div with styles and optional behaviors, and the actual rendering child
+    // being our child inside that
+    if (layoutType) {
+      const { containerStyle, children } = childConfig;
+
+      return this.renderComponentCore(
+        key,
+        behaviors,
+        styleObj,
+        // render the actual container as the child of the component
+        this.renderContainer({
+          layoutType,
+          containerStyle,
+          children
+        })
+      );
+    }
+
+    // single child
+    const { component } = childConfig;
+    return this.renderComponentCore(key, behaviors, styleObj, component);
+  }
+
+  renderContainerCore(layoutConfig, childComponents) {
+    const { containerStyle } = layoutConfig;
+    return <div style={containerStyle}>{childComponents}</div>;
+    // return this.renderComponentCore(
+    //   key,
+    //   behaviors,
+    //   containerStyle,
+    //   childComponents
+    // );
+  }
+
+  renderComponentCore(key, behaviorInfo, styleObj, component) {
+    let behaviors = this.getChildBehaviors(key, behaviorInfo);
     let childRef = this.getChildRef(key);
 
-    if (!behaviors.length) {
+    if (!behaviors || !behaviors.length) {
       return (
-        <div key={key} style={styleObj} ref={childRef}>
-          {childConfig.component}
+        <div key={key} style={styleObj} ref={childRef} id={key}>
+          {component}
         </div>
       );
     }
@@ -81,13 +106,17 @@ export class GridLayout extends React.Component {
         style={styleObj}
         containerRef={childRef}
       >
-        {childConfig.component}
+        {component}
       </BehaviorCollection>
     );
   }
 
-  getChildBehaviors(childKey, childConfig) {
-    const { behaviors: { animate, stick } = {} } = childConfig;
+  getChildBehaviors(childKey, behaviorInfo) {
+    if (!behaviorInfo) {
+      return;
+    }
+
+    const { animate, stick } = behaviorInfo;
     return this.getCachedBehaviors([childKey, animate, stick], () => {
       const behaviors = [];
       if (animate) {

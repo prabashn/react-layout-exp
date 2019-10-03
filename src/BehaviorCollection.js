@@ -81,7 +81,7 @@ export class BehaviorCollection extends React.Component {
       children,
       getLayoutChildRef, // used in constructor
       getBehaviorCollectionRef, // used in ctor
-      behaviorKey, // used in ctor
+      behaviorKey, // also used in ctor
       ...otherProps
     } = this.props;
 
@@ -105,7 +105,7 @@ export class BehaviorCollection extends React.Component {
     });
 
     return (
-      <div ref={this.containerRef} {...otherProps}>
+      <div ref={this.containerRef} {...otherProps} id={behaviorKey}>
         <BehaviorContext.Provider value={this.behaviorContext}>
           {WrappedComponent}
         </BehaviorContext.Provider>

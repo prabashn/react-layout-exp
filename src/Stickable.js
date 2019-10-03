@@ -79,7 +79,8 @@ export class Stickable extends Proximity {
       if (
         !this.isSticky ||
         //status.targetRectUpdated ||
-        status.selfRectUpdated
+        status.selfRectUpdated ||
+        status.viewportUpdated
       ) {
         this.updateSizeHelper(status.selfRect);
         this.stick(status);

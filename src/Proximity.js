@@ -31,6 +31,13 @@ export class Proximity extends React.Component {
 
   status = null;
 
+  constructor(props) {
+    super(props);
+
+    this.onScroll = throttle(this.onScroll, 50);
+    this.onResize = throttle(this.onResize, 50);
+  }
+
   render() {
     return (
       <BehaviorContext.Consumer children={this.renderWithBehaviorContext} />
@@ -108,12 +115,12 @@ export class Proximity extends React.Component {
         this.targetRefName = targetRefName;
 
         //let targetRef = behaviorContext.getLayoutChildRef(targetRefName);
-        let targetRef = behaviorContext
-          .getBehaviorContext(targetRefName)
-          .getInnerRef();
-
-        if (targetRef) {
-          this.targetRef = targetRef;
+        let targetContext = behaviorContext.getBehaviorContext(targetRefName);
+        if (targetContext) {
+          const targetRef = targetContext.getInnerRef();
+          if (targetRef) {
+            this.targetRef = targetRef;
+          }
         }
       }
     }
@@ -200,7 +207,7 @@ export class Proximity extends React.Component {
     if (
       !this.targetRect ||
       !this.selfRect ||
-      !(targetRectUpdated || selfRectUpdated || viewportUpdated)
+      !(forceUpdate || targetRectUpdated || selfRectUpdated || viewportUpdated)
     ) {
       return;
     }
@@ -234,6 +241,7 @@ export class Proximity extends React.Component {
         targetRect: this.targetRect,
         targetEdge,
         // viewport info
+        viewportUpdated,
         viewportRect: this.viewportRect,
         viewportEdge: this.viewportRect[targetDir === 0 ? "top" : "left"]
       })
