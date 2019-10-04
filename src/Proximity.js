@@ -49,7 +49,9 @@ export class Proximity extends React.Component {
     return this.renderCore(behaviorContext, this.selfRef);
   };
 
-  renderCore(behaviorContext, selfRef) {}
+  renderCore(behaviorContext, selfRef) {
+    return this.props.children;
+  }
 
   componentDidMount() {
     window.addEventListener("scroll", this.onScroll);
@@ -146,14 +148,17 @@ export class Proximity extends React.Component {
     }
   }
 
-  // TODO: fix container / scoll position calculation logic for sticky
+  getSelfElement() {
+    return (
+      (this.selfRef && this.selfRef.current) ||
+      (this.behaviorContainerRef && this.behaviorContainerRef.current)
+    );
+  }
 
   tryUpdateSelfRect(updateSizeHelper) {
     // if the self ref was not updated with an element, attempt to get it from
     // the top most known behavior container
-    const selfElement =
-      (this.selfRef && this.selfRef.current) ||
-      (this.behaviorContainerRef && this.behaviorContainerRef.current);
+    const selfElement = this.getSelfElement();
 
     if (selfElement) {
       this.selfRect = getRelativeRect(selfElement);

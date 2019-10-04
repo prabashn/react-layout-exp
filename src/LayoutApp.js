@@ -137,6 +137,11 @@ const gridConfig = {
           //  there seems to be problems when a referenced child apepars later
           // targetRefName: "child6",
           // targetSide: "bottom"
+        },
+        opacity: {
+          transitionGap: 50,
+          minOpacity: 0.5
+          //selfOffset: 0
         }
       },
       row: 2,
@@ -168,6 +173,9 @@ const gridConfig = {
           targetRefName: "child3",
           targetSide: "top",
           targetOffset: 30
+        },
+        opacity: {
+          transitionGap: -300
         }
       },
       // stickCompanion: "top-sticky",
@@ -204,6 +212,12 @@ const gridConfig = {
           //selfOffset: -50 //TODO: figure out why this doesn't work
           //selfOffset: 50 // this works
           //targetOffset: 50
+        },
+        opacity: {
+          transitionGap: -150,
+          targetRefName: "child3",
+          targetSide: "bottom",
+          invertOpacity: true
         }
       },
       row: 4,
@@ -248,6 +262,14 @@ const gridConfig = {
           ),
           childStyle: {
             flexGrow: 1
+          },
+          behaviors: {
+            opacity: {
+              transitionGap: -40,
+              selfOffset: 40,
+              minOpacity: 0.2,
+              maxOpacity: 0.8
+            }
           }
         },
         {

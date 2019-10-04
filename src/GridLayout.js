@@ -1,6 +1,7 @@
 import React from "react";
 import { Animatable } from "./Animatable";
 import { Stickable } from "./Stickable";
+import { Opacity } from "./Opacity";
 import { BehaviorCollection } from "./BehaviorCollection";
 import { memoize } from "lodash-es";
 
@@ -116,20 +117,25 @@ export class GridLayout extends React.Component {
       return;
     }
 
-    const { animate, stick } = behaviorInfo;
-    return this.getCachedBehaviors([childKey, animate, stick], () => {
+    const { animate, stick, opacity } = behaviorInfo;
+    return this.getCachedBehaviors([childKey, animate, stick, opacity], () => {
       const behaviors = [];
       if (animate) {
-        let props = typeof animate === "object" ? animate : undefined;
-        behaviors.push({ class: Animatable, props });
+        behaviors.push(this.createBehavior(Animatable, animate));
       }
       if (stick) {
-        let props = typeof stick === "object" ? stick : undefined;
-        //behaviors.push(new Stickable());
-        behaviors.push({ class: Stickable, props });
+        behaviors.push(this.createBehavior(Stickable, stick));
+      }
+      if (opacity) {
+        behaviors.push(this.createBehavior(Opacity, opacity));
       }
       return behaviors;
     });
+  }
+
+  createBehavior(behaviorClass, behaviorConfig) {
+    let props = typeof behaviorConfig === "object" ? behaviorConfig : undefined;
+    return { class: behaviorClass, props };
   }
 
   getChildRef = memoize(_childKey => React.createRef());
