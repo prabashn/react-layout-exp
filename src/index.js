@@ -1,6 +1,7 @@
 import React from "react";
 import ReactDOM from "react-dom";
 import { LayoutApp } from "./LayoutApp";
+import { AnaheimLayoutApp } from "./AnaheimLayoutApp";
 
 let appProps = {
   button1: document.getElementById("btn1"),
@@ -9,4 +10,8 @@ let appProps = {
   button4: document.getElementById("btn4")
 };
 
-ReactDOM.render(<LayoutApp {...appProps} />, document.getElementById("app"));
+//ReactDOM.render(<LayoutApp {...appProps} />, document.getElementById("app"));
+ReactDOM.render(
+  <AnaheimLayoutApp {...appProps} />,
+  document.getElementById("app")
+);

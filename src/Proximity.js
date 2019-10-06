@@ -1,4 +1,3 @@
-//import { Behavior } from "./Behavior";
 import { throttle } from "lodash-es";
 import {
   getViewportRect,
@@ -8,6 +7,7 @@ import {
 } from "./positionHelper";
 import React from "react";
 import { BehaviorContext } from "./BehaviorContext";
+import { GlobalLayoutContext } from "./GlobalLayoutContext";
 
 const SideDirection = {
   top: 0,
@@ -34,22 +34,16 @@ export class Proximity extends React.Component {
   constructor(props) {
     super(props);
 
+    this.behaviorContext = props.behaviorContext;
     this.onScroll = throttle(this.onScroll, 50);
     this.onResize = throttle(this.onResize, 50);
   }
 
   render() {
-    return (
-      <BehaviorContext.Consumer children={this.renderWithBehaviorContext} />
-    );
+    return this.renderCore(this.selfRef);
   }
 
-  renderWithBehaviorContext = behaviorContext => {
-    this.behaviorContext = behaviorContext;
-    return this.renderCore(behaviorContext, this.selfRef);
-  };
-
-  renderCore(behaviorContext, selfRef) {
+  renderCore(selfRef) {
     return this.props.children;
   }
 
@@ -104,20 +98,15 @@ export class Proximity extends React.Component {
     const { targetRefName } = this.props;
 
     if (targetRefName !== this.targetRefName) {
-      const behaviorContext = this.behaviorContext;
-
       // if we have a custom target name, then resolve the target
-      if (
-        targetRefName &&
-        behaviorContext &&
-        behaviorContext.getLayoutChildRef
-      ) {
+      if (targetRefName) {
         // update the cached name value so we don't try to re-evaluate
         // even if targetRef is null
         this.targetRefName = targetRefName;
 
-        //let targetRef = behaviorContext.getLayoutChildRef(targetRefName);
-        let targetContext = behaviorContext.getBehaviorContext(targetRefName);
+        let targetContext = this.behaviorContext.getBehaviorContext(
+          targetRefName
+        );
         if (targetContext) {
           const targetRef = targetContext.getInnerRef();
           if (targetRef) {
@@ -251,62 +240,7 @@ export class Proximity extends React.Component {
         viewportEdge: this.viewportRect[targetDir === 0 ? "top" : "left"]
       })
     );
-
-    // if (transitionGap !== 0) {
-    //   // handle transition calculation
-    //   let leadingEdge;
-    //   let trailingEdge;
-
-    //   // based on the transition gap value, sort the leading/trailing
-    //   // so leading is always smaller than trailing
-    //   if (transitionGap > 0) {
-    //     leadingEdge = targetEdge;
-    //     trailingEdge = leadingEdge + transitionGap;
-    //   } else {
-    //     leadingEdge = targetEdge + transitionGap;
-    //     trailingEdge = targetEdge;
-    //   }
-
-    //   if (selfEdge < leadingEdge) {
-    //     // above
-    //     //if (forceUpdate || !thisStatus.above) {
-    //     this.onStatusChanged({ above: true });
-    //     //}
-    //   } else if (selfEdge <= trailingEdge) {
-    //     // between transition.
-    //     const percent = reverseTransition
-    //       ? (selfEdge - leadingEdge) / Math.abs(transitionGap) // leading = 0%, trailing = 100%
-    //       : (trailingEdge - selfEdge) / Math.abs(transitionGap); // leading = 100%, trailing = 0%
-
-    //     // if (
-    //     //   forceUpdate ||
-    //     //   !thisStatus.between ||
-    //     //   thisStatus.percent !== percent
-    //     // ) {
-    //     this.onStatusChanged({ between: true, percent });
-    //     //}
-    //   } else {
-    //     //if (forceUpdate || !thisStatus.below) {
-    //     // below
-    //     this.onStatusChanged({ below: true });
-    //   }
-    // } else if (selfEdge < targetEdge) {
-    //   // above
-    //   //if (forceUpdate || !thisStatus.above) {
-    //   this.onStatusChanged({ above: true });
-    //   //}
-    // } else {
-    //   //if (forceUpdate || !thisStatus.below) {
-    //   // on || below
-    //   this.onStatusChanged({ below: true });
-    // }
   }
-
-  // // TODO: do we need these?
-  // onTargetRectChanged() {}
-
-  // // TODO: do we need these?
-  // onSelfRectChanged() {}
 
   // inheritors should override
   onStatusChanged(status) {}

@@ -1,12 +1,10 @@
-//import { Behavior } from "./Behavior";
 import { throttle } from "lodash-es";
-import { toPx, getOffsetRect } from "./positionHelper";
+import { toPx } from "./positionHelper";
 import React from "react";
 import { Proximity } from "./Proximity";
 
 //export class Stickable extends Behavior {
 export class Stickable extends Proximity {
-  setBehaviorContext = null;
   stickyContainerRef = React.createRef();
   sizeHelperRef = React.createRef();
   isSticky = false;
@@ -16,17 +14,15 @@ export class Stickable extends Proximity {
     this.calculateStick = throttle(this.calculateStick, 20);
   }
 
-  renderCore(behaviorContext, _selfRef) {
-    // we don't use _selfRef as we want the top behavior container as defaulted in base
-    this.setBehaviorContext = behaviorContext.setBehaviorContext;
-    behaviorContext.pushInnerRef(this.stickyContainerRef);
+  renderCore(_selfRef) {
+    this.behaviorContext.pushInnerRef(this.stickyContainerRef);
 
     return (
       <React.Fragment>
         <div ref={this.stickyContainerRef}>{this.props.children}</div>
         <div
           ref={this.sizeHelperRef}
-          style={{ display: "none", outline: "1px solid red" }}
+          //style={{ display: "none", outline: "1px solid red" }}
         />
       </React.Fragment>
     );
@@ -40,17 +36,6 @@ export class Stickable extends Proximity {
   onStatusChanged(status) {
     this.calculateStick(status);
   }
-
-  // // TODO: do we need these?
-  // onTargetRectChanged() {
-  //   this.calculateStick(this.status);
-  // }
-
-  // // TODO: do we need these?
-  // onSelfRectChanged() {
-  //   this.updateSizeHelper();
-  //   this.calculateStick(this.status);
-  // }
 
   updateSizeHelper(sizeRect) {
     if (this.sizeHelperRef.current) {
@@ -91,8 +76,6 @@ export class Stickable extends Proximity {
   }
 
   stick(status) {
-    //const { top: containerTop } = this.containerPos;
-
     // show the helper so the container doesn't collapse after we make the
     // sticky container 'sticky' and move out of the flow
     Object.assign(this.sizeHelperRef.current.style, {
@@ -115,10 +98,7 @@ export class Stickable extends Proximity {
     });
 
     this.isSticky = true;
-
-    if (this.setBehaviorContext) {
-      this.setBehaviorContext({ animationsEnabled: false });
-    }
+    this.behaviorContext.setBehaviorContext({ animationsEnabled: false });
   }
 
   unstick() {
@@ -134,9 +114,6 @@ export class Stickable extends Proximity {
     });
 
     this.isSticky = false;
-
-    if (this.setBehaviorContext) {
-      this.setBehaviorContext({ animationsEnabled: true });
-    }
+    this.behaviorContext.setBehaviorContext({ animationsEnabled: true });
   }
 }

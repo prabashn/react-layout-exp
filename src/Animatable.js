@@ -25,16 +25,12 @@ export class Animatable extends React.Component {
   relativePos = null;
   resetTransitionTimeout = null;
   containerRef;
-  //behaviorContext = null;
-  ///animationsEnabled = true;
   behaviorContext = null;
 
-  // beforeRender(containerRef) {
-  //   // in-case things have shifted/resized after the previous render/mount/update
-  //   // re-calculate the container position before the new styles are applied by
-  //   // BehaviorCollection
-  //   this.calcCurrentPos(containerRef);
-  // }
+  constructor(props) {
+    super(props);
+    this.behaviorContext = props.behaviorContext;
+  }
 
   render() {
     // in-case things have shifted/resized after the previous render/mount/update
@@ -44,34 +40,17 @@ export class Animatable extends React.Component {
       this.calcCurrentPos(this.containerRef);
     }
 
-    return (
-      <BehaviorContext.Consumer children={this.renderWithBehaviorContext} />
-    );
+    return this.props.children;
   }
 
   componentWillUnmount() {
     clearTimeout(this.resetTransitionTimeout);
-    if (this.behaviorContext) {
-      this.behaviorContext.unsubscribe(this.behaviorContextChanged);
-    }
+    this.behaviorContext.unsubscribe(this.behaviorContextChanged);
   }
 
   componentDidMount() {
-    if (this.behaviorContext) {
-      this.behaviorContext.subscribe(this.behaviorContextChanged);
-    }
+    this.behaviorContext.subscribe(this.behaviorContextChanged);
   }
-
-  renderWithBehaviorContext = behaviorContext => {
-    this.behaviorContextChanged(behaviorContext);
-    behaviorContext.subscribe(this.behaviorContextChanged);
-    return this.props.children;
-  };
-
-  behaviorContextChanged = behaviorContext => {
-    this.behaviorContext = behaviorContext;
-    //this.animationsEnabled = behaviorContext.animationsEnabled;
-  };
 
   mounted(containerRef) {
     this.containerRef = containerRef;
@@ -122,7 +101,7 @@ export class Animatable extends React.Component {
       return;
     }
 
-    if (this.behaviorContext && !this.behaviorContext.animationsEnabled) {
+    if (!this.behaviorContext.animationsEnabled) {
       console.log("animations disabled!");
       this.setStyle(containerRef, removeTransformStyle);
       return;
@@ -166,11 +145,9 @@ export class Animatable extends React.Component {
       this.resetTransitionTimeout = setTimeout(() => {
         this.setStyle(containerRef, removeTransformStyle);
         // TODO: make sure this is not triggering recursive update!
-        if (this.behaviorContext) {
-          this.behaviorContext.setBehaviorContext({
-            animationsRunning: false
-          });
-        }
+        this.behaviorContext.setBehaviorContext({
+          animationsRunning: false
+        });
       }, transitionTimeMs);
     }, 0);
 
@@ -187,25 +164,8 @@ export class Animatable extends React.Component {
   }
 
   setStyle(containerRef, styleObj) {
-    //this.ref.current.style = styleObj;
-
-    // this does not seem to work even if we completely do not use react styles (which could conflict) - why??
-    //var style = this.getStyle(styleObj);
-    //this.ref.current.style.cssText = style;
-
     // handle the style explicitly so we don't end up triggerring state updates just to
     // re-render the style when we need to animate.
     Object.assign(containerRef.current.style, styleObj);
   }
-
-  // getStyle(styleObj) {
-  //   var style = [];
-  //   for (let key in styleObj) {
-  //     style.push(key);
-  //     style.push(":");
-  //     style.push(styleObj[key]);
-  //     style.push(";");
-  //   }
-  //   return style.join("");
-  // }
 }

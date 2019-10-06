@@ -1,12 +1,8 @@
-//import { Behavior } from "./Behavior";
 import { throttle } from "lodash-es";
-import { toPx } from "./positionHelper";
-import React from "react";
 import { Proximity } from "./Proximity";
 
 //export class Stickable extends Behavior {
 export class Opacity extends Proximity {
-  setBehaviorContext = null;
   opacity = null;
 
   constructor(props) {
@@ -37,8 +33,11 @@ export class Opacity extends Proximity {
       this.updateOpacity(minOpacity, invertOpacity);
     } else if (leadingEdge < targetEdge) {
       // leading edge above target, but trailing below target - transitioning
+
+      // closer you are to trailing edge, the lower your opacity is going to be
       const fraction = (trailingEdge - targetEdge) / Math.abs(transitionGap);
       const opacity = minOpacity + fraction * (maxOpacity - minOpacity);
+
       this.updateOpacity(opacity, invertOpacity);
     } else {
       // both leading & trailing are below target
@@ -52,7 +51,7 @@ export class Opacity extends Proximity {
       return;
     }
 
-    console.log(["opacity", opacity, "invert", invert]);
+    //console.log(["opacity", opacity, "invert", invert]);
 
     if (invert) {
       opacity = 1 - opacity;

@@ -1,6 +1,6 @@
 import React from "react";
 import { BehaviorContext } from "./BehaviorContext";
-
+import { GlobalLayoutContext } from "./GlobalLayoutContext";
 /**
  * This component just serves as a wrapper for non-animated components
  * so that we have an intermediary to apply the grid positioning styling
@@ -18,17 +18,19 @@ export class BehaviorCollection extends React.Component {
 
   constructor(props) {
     super(props);
-    this.containerRef = props.containerRef;
 
     const subscribers = [];
     this.setBehaviorContext({
       behaviorKey: props.behaviorKey,
+
+      // from global context
+      getChildRef: null,
+      getBehaviorContext: null,
+
       setBehaviorContext: this.setBehaviorContext,
       animationsEnabled: true,
       animationsRunning: false,
       subscribers,
-      getLayoutChildRef: props.getLayoutChildRef || (layoutChildName => {}),
-      getContainerRef: () => this.containerRef,
       getInnerRef: () =>
         this.innerRefs[this.innerRefs.length - 1] || this.containerRef,
       pushInnerRef: ref => {
@@ -43,12 +45,6 @@ export class BehaviorCollection extends React.Component {
         const refIndex = this.innerRefs.indexOf(ref);
         if (refIndex >= 0) {
           this.innerRefs.splice(refIndex, 1);
-        }
-      },
-      getBehaviorContext: behaviorCollectionKey => {
-        if (props.getBehaviorCollectionRef) {
-          const ref = props.getBehaviorCollectionRef(behaviorCollectionKey);
-          return ref && ref.current && ref.current.behaviorContext;
         }
       },
       subscribe: callback => {
@@ -77,10 +73,7 @@ export class BehaviorCollection extends React.Component {
   render() {
     const {
       behaviors,
-      containerRef,
       children,
-      getLayoutChildRef, // used in constructor
-      getBehaviorCollectionRef, // used in ctor
       behaviorKey, // also used in ctor
       ...otherProps
     } = this.props;
@@ -98,18 +91,33 @@ export class BehaviorCollection extends React.Component {
       const { class: Behavior, props } = behavior;
 
       WrappedComponent = (
-        <Behavior ref={behaviorRef} {...props}>
+        <Behavior
+          ref={behaviorRef}
+          {...props}
+          behaviorContext={this.behaviorContext}
+        >
           {WrappedComponent}
         </Behavior>
       );
     });
 
     return (
-      <div ref={this.containerRef} {...otherProps} id={behaviorKey}>
-        <BehaviorContext.Provider value={this.behaviorContext}>
-          {WrappedComponent}
-        </BehaviorContext.Provider>
-      </div>
+      <GlobalLayoutContext.Consumer>
+        {globalLayoutContext => {
+          this.setBehaviorContext({
+            getChildRef: globalLayoutContext.getChildRef,
+            getBehaviorContext: globalLayoutContext.getBehaviorContext
+          });
+
+          // child ref for this behavior's outer-most container
+          this.containerRef = globalLayoutContext.getChildRef(behaviorKey);
+          return (
+            <div ref={this.containerRef} {...otherProps} id={behaviorKey}>
+              {WrappedComponent}
+            </div>
+          );
+        }}
+      </GlobalLayoutContext.Consumer>
     );
   }
 
