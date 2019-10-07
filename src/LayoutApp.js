@@ -1,7 +1,7 @@
 // https://jsbin.com/bakoniw/2/
 
 import React from "react";
-import { GridLayout } from "./GridLayout";
+import { GridLayout } from "./Layout";
 
 const childStyle = {
   border: "5px solid black",
@@ -54,7 +54,7 @@ function commonFunctions(childKey) {
   );
 }
 
-const gridConfig = {
+const layoutConfig = {
   layoutType: "grid",
   key: "main-grid",
   containerStyle: {
@@ -372,58 +372,58 @@ const gridConfig = {
   ]
 };
 
-// const gridConfig2 = {
-//   ...gridConfig,
+// const layoutConfig2 = {
+//   ...layoutConfig,
 //   gridStyle: {
-//     ...gridConfig.gridStyle,
+//     ...layoutConfig.gridStyle,
 //     gridTemplateRows: "auto auto auto",
 //     gridTemplateColumns: "1fr 1fr"
 //   }
 // };
 
-function swapColsAndRowsConfig(gridConfig) {
+function swapColsAndRowsConfig(layoutConfig) {
   return {
-    ...gridConfig,
+    ...layoutConfig,
     children: [
       // swap child 1 & 2
       {
-        ...gridConfig.children[0],
-        col: gridConfig.children[1].col
+        ...layoutConfig.children[0],
+        col: layoutConfig.children[1].col
       },
       {
-        ...gridConfig.children[1],
-        col: gridConfig.children[0].col
+        ...layoutConfig.children[1],
+        col: layoutConfig.children[0].col
       },
       // swap child 3 & 4
       {
-        ...gridConfig.children[2],
-        row: gridConfig.children[3].row
+        ...layoutConfig.children[2],
+        row: layoutConfig.children[3].row
       },
       {
-        ...gridConfig.children[3],
-        row: gridConfig.children[2].row
+        ...layoutConfig.children[3],
+        row: layoutConfig.children[2].row
       },
-      gridConfig.children[4]
+      layoutConfig.children[4]
     ]
   };
 }
 
-function swapOneChild(gridConfig) {
+function swapOneChild(layoutConfig) {
   return {
-    ...gridConfig,
+    ...layoutConfig,
     children: [
-      gridConfig.children[0],
-      gridConfig.children[1],
+      layoutConfig.children[0],
+      layoutConfig.children[1],
       // swap child 3 & 4
       {
-        ...gridConfig.children[2],
-        row: gridConfig.children[3].row
+        ...layoutConfig.children[2],
+        row: layoutConfig.children[3].row
       },
       {
-        ...gridConfig.children[3],
-        row: gridConfig.children[2].row
+        ...layoutConfig.children[3],
+        row: layoutConfig.children[2].row
       },
-      gridConfig.children[4]
+      layoutConfig.children[4]
     ]
   };
 }
@@ -434,20 +434,21 @@ export class LayoutApp extends React.Component {
   constructor(props) {
     super(props);
 
-    this.state = { gridConfig };
+    this.state = { layoutConfig: layoutConfig };
 
     props.button1.addEventListener("click", () =>
-      this.setState({ gridConfig })
+      this.setState({ layoutConfig: layoutConfig })
     );
     props.button2.addEventListener("click", () =>
       this.setState({
-        gridConfig: swapColsAndRowsConfig(this.state.gridConfig)
+        layoutConfig: swapColsAndRowsConfig(this.state.layoutConfig)
       })
     );
     props.button3.addEventListener(
       "click",
-      () => this.setState({ gridConfig: swapOneChild(this.state.gridConfig) })
-      //this.setState({ gridConfig: gridConfig2 })
+      () =>
+        this.setState({ layoutConfig: swapOneChild(this.state.layoutConfig) })
+      //this.setState({ layoutConfig: layoutConfig2 })
     );
     props.button4.addEventListener("click", () =>
       // TODO: we can do intersection observer on these raw elements now to do any custom handling at the DOM level
@@ -462,8 +463,8 @@ export class LayoutApp extends React.Component {
     );
 
     mediator.sub("updateState", (childKey, propName, value) => {
-      const stateConfig = this.state.gridConfig;
-      var config = { ...stateConfig, children: [...stateConfig.children] };
+      const { layoutConfig } = this.state;
+      var config = { ...layoutConfig, children: [...layoutConfig.children] };
       config.children.forEach((child, index) => {
         if (child.key === childKey) {
           config.children[index] = {
@@ -472,13 +473,13 @@ export class LayoutApp extends React.Component {
           };
         }
       });
-      this.setState({ gridConfig: config });
+      this.setState({ layoutConfig: config });
     });
   }
 
   render() {
     return (
-      <GridLayout ref={this.layoutRef} gridConfig={this.state.gridConfig} />
+      <GridLayout ref={this.layoutRef} layoutConfig={this.state.layoutConfig} />
     );
   }
 }

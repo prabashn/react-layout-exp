@@ -6,8 +6,6 @@ import {
   getOffsetRect
 } from "./positionHelper";
 import React from "react";
-import { BehaviorContext } from "./BehaviorContext";
-import { GlobalLayoutContext } from "./GlobalLayoutContext";
 
 const SideDirection = {
   top: 0,

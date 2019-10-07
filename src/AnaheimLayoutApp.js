@@ -1,7 +1,7 @@
 // https://jsbin.com/bakoniw/2/
 
 import React from "react";
-import { GridLayout } from "./GridLayout";
+import { Layout } from "./Layout";
 import { Feed } from "./Feed";
 import {
   GlobalLayoutContext,
@@ -13,12 +13,27 @@ const childStyle = {
   padding: "20px"
 };
 
+const background = (
+  <div
+    style={{
+      ...childStyle,
+      background: "gray",
+      //  background: "linear-gradient(180deg, rgba(100,100,100,0.8) 0%, rgba(100,100,100,0.2) 100%)",
+      width: "100vw",
+      height: "100vh"
+    }}
+  >
+    Background
+  </div>
+);
+
 const logo = (
   <div
     style={{
       ...childStyle,
-      background: "rgba(255,0,0,.2)",
-      width: "200px"
+      background: "rgba(255,0,0)",
+      width: "300px",
+      height: "50px"
     }}
   >
     Logo
@@ -26,25 +41,25 @@ const logo = (
 );
 
 const search = (
+  // <div
+  //   style={{
+  //     backgroundColor: "white",
+  //     width: "100vw",
+  //     //border: "1px dashed green",
+  //     padding: "50px 0 50px 0"
+  //   }}
+  // >
   <div
     style={{
-      backgroundColor: "white",
-      width: "100vw",
-      border: "1px dashed green",
-      padding: "50px 0 50px 0"
+      ...childStyle,
+      background: "rgba(0,255,0)",
+      width: "50vw",
+      margin: "50px 0"
     }}
   >
-    <div
-      style={{
-        ...childStyle,
-        background: "rgba(0,255,0,.2)",
-        width: "50vw",
-        margin: "auto"
-      }}
-    >
-      Search
-    </div>
+    Search
   </div>
+  // </div>
 );
 
 const topSites = (
@@ -52,7 +67,7 @@ const topSites = (
     id="ts"
     style={{
       ...childStyle,
-      background: "rgba(0,0,255,.2)",
+      background: "rgba(0,0,255)",
       margin: "100px 0 50px 0"
     }}
   >
@@ -69,6 +84,7 @@ const riverLoaderButton = (
       width: "200px",
       padding: "5px",
       textAlign: "center",
+      background: "white",
       marginBottom: "20px"
     }}
   >
@@ -77,32 +93,53 @@ const riverLoaderButton = (
 );
 
 const settingsGear = (
-  <div style={{ ...childStyle, width: "20px", height: "20px", padding: "5px" }}>
+  <div
+    style={{
+      ...childStyle,
+      width: "20px",
+      height: "20px",
+      padding: "5px",
+      background: "white"
+    }}
+  >
     ...
   </div>
 );
 
-const gridConfig = {
+const layoutConfigFull = {
   layoutType: "grid",
   key: "main-grid",
   containerStyle: {
-    //position: "relative",
-    //display: "grid",
-    //height: "calc(100vh - 100px)", // 16px to account for some random margin added by the sandbox.io
-    //gridTemplateRows: "auto calc(100vh - 200px) auto",
     gridTemplateRows: "100vh auto"
-    //gridTemplateColumns: "1fr"
-    // "grid-template-rows": "auto 1fr auto",
-    // "grid-template-columns": "1fr 1fr"
   },
   children: [
+    {
+      key: "background",
+      childStyle: {
+        position: "fixed",
+        top: 0,
+        left: 0,
+        zIndex: "1"
+      },
+      row: 1,
+      component: background,
+      transitions: {
+        "nav-sticky": {
+          childStyle: {
+            height: "162px",
+            zIndex: "2",
+            overflow: "hidden"
+          }
+        }
+      }
+    },
     {
       key: "settings-gear",
       component: settingsGear,
       childStyle: {
         justifySelf: "end",
         margin: "50px",
-        zIndex: 2
+        zIndex: 3
       },
       behaviors: {
         stick: {
@@ -117,7 +154,8 @@ const gridConfig = {
         gridTemplateRows: "auto auto auto 1fr"
       },
       childStyle: {
-        alignSelf: "center"
+        alignSelf: "center",
+        zIndex: 2
       },
       row: 1,
       children: [
@@ -173,7 +211,8 @@ const gridConfig = {
       row: 1,
       childStyle: {
         justifySelf: "center",
-        alignSelf: "end"
+        alignSelf: "end",
+        zIndex: 2
       },
       behaviors: {
         opacity: {
@@ -188,7 +227,8 @@ const gridConfig = {
       component: river,
       row: 2,
       childStyle: {
-        justifySelf: "center"
+        justifySelf: "center",
+        zIndex: 1
       },
       behaviors: {
         // stick: {
@@ -207,22 +247,22 @@ export class AnaheimLayoutApp extends React.Component {
   constructor(props) {
     super(props);
 
-    this.state = { gridConfig };
+    this.state = { layoutConfig: layoutConfigFull };
 
     props.button1.addEventListener("click", () =>
-      this.setState({ gridConfig })
+      this.setState({ layoutConfig: layoutConfigFull })
     );
 
     // props.button2.addEventListener("click", () =>
     //   this.setState({
-    //     gridConfig: swapColsAndRowsConfig(this.state.gridConfig)
+    //     layoutConfig: swapColsAndRowsConfig(this.state.layoutConfig)
     //   })
     // );
 
     // props.button3.addEventListener(
     //   "click",
-    //   () => this.setState({ gridConfig: swapOneChild(this.state.gridConfig) })
-    //   //this.setState({ gridConfig: gridConfig2 })
+    //   () => this.setState({ layoutConfig: swapOneChild(this.state.layoutConfig) })
+    //   //this.setState({ layoutConfig: layoutConfig2 })
     // );
 
     // props.button4.addEventListener("click", () =>
@@ -238,7 +278,7 @@ export class AnaheimLayoutApp extends React.Component {
     // );
 
     // mediator.sub("updateState", (childKey, propName, value) => {
-    //   const stateConfig = this.state.gridConfig;
+    //   const stateConfig = this.state.layoutConfig;
 
     //   var config = { ...stateConfig, children: [...stateConfig.children] };
 
@@ -251,15 +291,13 @@ export class AnaheimLayoutApp extends React.Component {
     //     }
     //   });
 
-    //   this.setState({ gridConfig: config });
+    //   this.setState({ layoutConfig: config });
     // });
   }
 
   render() {
     return (
-      <GlobalLayoutContext.Provider value={DefaultGlobalLayoutContext}>
-        <GridLayout ref={this.layoutRef} gridConfig={this.state.gridConfig} />
-      </GlobalLayoutContext.Provider>
+      <Layout ref={this.layoutRef} layoutConfig={this.state.layoutConfig} />
     );
   }
 }

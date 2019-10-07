@@ -1,6 +1,5 @@
 import React from "react";
-import { BehaviorContext } from "./BehaviorContext";
-import { GridLayout } from "./GridLayout";
+import { Layout } from "./Layout";
 
 const childStyle = {
   border: "2px solid black",
@@ -10,24 +9,14 @@ const childStyle = {
 export class Feed extends React.Component {
   render() {
     return (
-      <GridLayout
-        gridConfig={{
+      <Layout
+        layoutConfig={{
           layoutType: "grid",
           containerStyle: {
-            gridTemplateRows: "auto 100vh"
+            background: "black",
+            width: "100vw"
           },
           children: [
-            {
-              key: "nav-bg",
-              component: (
-                <div
-                  style={{
-                    backgroundColor: "white"
-                  }}
-                />
-              ),
-              row: 1
-            },
             {
               key: "nav",
               component: this.nav(),
@@ -38,7 +27,8 @@ export class Feed extends React.Component {
               behaviors: {
                 stick: {
                   targetRefName: "nav-container",
-                  targetSide: "bottom"
+                  targetSide: "bottom",
+                  transition: "nav-sticky"
                 }
               }
             },
@@ -61,8 +51,7 @@ export class Feed extends React.Component {
       <div
         style={{
           ...childStyle,
-          background: "rgba(0,255,255,.2)",
-          margin: "-10px -10px 10px -10px",
+          background: "rgba(0,255,255)",
           width: "80vw"
         }}
       >
@@ -76,7 +65,7 @@ export class Feed extends React.Component {
       <div
         style={{
           ...childStyle,
-          background: "rgba(0,255,255,.2)",
+          background: "rgba(0,255,255)",
           height: "150vh",
           width: "80vw"
           //transform: "translate(50px, 50px)"

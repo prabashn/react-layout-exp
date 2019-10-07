@@ -1,8 +1,6 @@
 import React from "react";
 import { memoize } from "lodash-es";
 
-export const GlobalLayoutContext = React.createContext();
-
 const aliasKeysMap = {};
 const getChildRef = memoize(_childKey => React.createRef(), getAliasedKey);
 const getBehaviorCollectionRef = memoize(
@@ -10,7 +8,7 @@ const getBehaviorCollectionRef = memoize(
   getAliasedKey
 );
 
-export const DefaultGlobalLayoutContext = {
+export const GlobalLayoutContext = {
   getChildRef,
   getBehaviorCollectionRef,
   getBehaviorContext: behaviorCollectionKey => {

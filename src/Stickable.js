@@ -2,6 +2,7 @@ import { throttle } from "lodash-es";
 import { toPx } from "./positionHelper";
 import React from "react";
 import { Proximity } from "./Proximity";
+import { Transitions } from "./Transitions";
 
 //export class Stickable extends Behavior {
 export class Stickable extends Proximity {
@@ -97,8 +98,7 @@ export class Stickable extends Proximity {
       //transform: "translateY(" + topPx + ")"
     });
 
-    this.isSticky = true;
-    this.behaviorContext.setBehaviorContext({ animationsEnabled: false });
+    this.transit(true);
   }
 
   unstick() {
@@ -113,7 +113,16 @@ export class Stickable extends Proximity {
       top: null
     });
 
-    this.isSticky = false;
-    this.behaviorContext.setBehaviorContext({ animationsEnabled: true });
+    this.transit(false);
+  }
+
+  transit(stick) {
+    this.isSticky = stick;
+    this.behaviorContext.setBehaviorContext({ animationsEnabled: !stick });
+
+    const { transition } = this.props;
+    if (transition) {
+      Transitions.pub(transition, stick);
+    }
   }
 }

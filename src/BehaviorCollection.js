@@ -1,5 +1,4 @@
 import React from "react";
-import { BehaviorContext } from "./BehaviorContext";
 import { GlobalLayoutContext } from "./GlobalLayoutContext";
 /**
  * This component just serves as a wrapper for non-animated components
@@ -101,23 +100,17 @@ export class BehaviorCollection extends React.Component {
       );
     });
 
-    return (
-      <GlobalLayoutContext.Consumer>
-        {globalLayoutContext => {
-          this.setBehaviorContext({
-            getChildRef: globalLayoutContext.getChildRef,
-            getBehaviorContext: globalLayoutContext.getBehaviorContext
-          });
+    this.setBehaviorContext({
+      getChildRef: GlobalLayoutContext.getChildRef,
+      getBehaviorContext: GlobalLayoutContext.getBehaviorContext
+    });
 
-          // child ref for this behavior's outer-most container
-          this.containerRef = globalLayoutContext.getChildRef(behaviorKey);
-          return (
-            <div ref={this.containerRef} {...otherProps} id={behaviorKey}>
-              {WrappedComponent}
-            </div>
-          );
-        }}
-      </GlobalLayoutContext.Consumer>
+    // child ref for this behavior's outer-most container
+    this.containerRef = GlobalLayoutContext.getChildRef(behaviorKey);
+    return (
+      <div ref={this.containerRef} {...otherProps} id={behaviorKey}>
+        {WrappedComponent}
+      </div>
     );
   }
 
