@@ -119,6 +119,7 @@ export class BehaviorCollection extends React.Component {
       const { current } = behaviorRef;
       current && current.mounted && current.mounted(this.containerRef);
     });
+    console.log("componentDidMount " + this.props.behaviorKey);
   }
 
   componentDidUpdate() {
@@ -126,5 +127,6 @@ export class BehaviorCollection extends React.Component {
       const { current } = behaviorRef;
       current && current.updated && current.updated(this.containerRef);
     });
+    console.log("componentDidUpdate " + this.props.behaviorKey);
   }
 }

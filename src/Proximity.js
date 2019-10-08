@@ -23,7 +23,6 @@ export class Proximity extends React.Component {
   targetRefName = null;
 
   selfRect = null;
-  selfRef = React.createRef();
 
   viewportRect = null;
 
@@ -38,10 +37,10 @@ export class Proximity extends React.Component {
   }
 
   render() {
-    return this.renderCore(this.selfRef);
+    return this.renderCore();
   }
 
-  renderCore(selfRef) {
+  renderCore() {
     return this.props.children;
   }
 
@@ -54,7 +53,7 @@ export class Proximity extends React.Component {
 
   componentDidUpdate() {
     // should we just wait for the parent update/mounted events to calculate both?
-    this.calculateCore(false, true, false, true);
+    this.calculateCore(true, true, false, true);
   }
 
   componentWillUnmount() {
@@ -101,16 +100,7 @@ export class Proximity extends React.Component {
         // update the cached name value so we don't try to re-evaluate
         // even if targetRef is null
         this.targetRefName = targetRefName;
-
-        let targetContext = this.behaviorContext.getBehaviorContext(
-          targetRefName
-        );
-        if (targetContext) {
-          const targetRef = targetContext.getInnerRef();
-          if (targetRef) {
-            this.targetRef = targetRef;
-          }
-        }
+        this.targetRef = this.getInnerRef(targetRefName);
       }
     }
 
@@ -129,6 +119,13 @@ export class Proximity extends React.Component {
     }
   }
 
+  getInnerRef(targetRefName) {
+    let targetContext = this.behaviorContext.getBehaviorContext(targetRefName);
+    if (targetContext) {
+      return targetContext.getInnerRef();
+    }
+  }
+
   getBehaviorContext(refName) {
     if (this.behaviorContext) {
       return this.behaviorContext.getBehaviorContext(refName);
@@ -136,8 +133,9 @@ export class Proximity extends React.Component {
   }
 
   getSelfElement() {
+    const selfRef = this.behaviorContext.getInnerRef();
     return (
-      (this.selfRef && this.selfRef.current) ||
+      (selfRef && selfRef.current) ||
       (this.behaviorContainerRef && this.behaviorContainerRef.current)
     );
   }

@@ -15,7 +15,7 @@ export class Stickable extends Proximity {
     this.calculateStick = throttle(this.calculateStick, 20);
   }
 
-  renderCore(_selfRef) {
+  renderCore() {
     this.behaviorContext.pushInnerRef(this.stickyContainerRef);
 
     return (
@@ -36,6 +36,12 @@ export class Stickable extends Proximity {
 
   onStatusChanged(status) {
     this.calculateStick(status);
+  }
+
+  getSelfElement() {
+    return (
+      (this.isSticky && this.sizeHelperRef.current) || super.getSelfElement()
+    );
   }
 
   updateSizeHelper(sizeRect) {

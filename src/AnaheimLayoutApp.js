@@ -3,10 +3,7 @@
 import React from "react";
 import { Layout } from "./Layout";
 import { Feed } from "./Feed";
-import {
-  GlobalLayoutContext,
-  DefaultGlobalLayoutContext
-} from "./GlobalLayoutContext";
+import { Transitions } from "./Transitions";
 
 const childStyle = {
   border: "2px solid black",
@@ -53,8 +50,7 @@ const search = (
     style={{
       ...childStyle,
       background: "rgba(0,255,0)",
-      width: "50vw",
-      margin: "50px 0"
+      width: "50vw"
     }}
   >
     Search
@@ -67,8 +63,7 @@ const topSites = (
     id="ts"
     style={{
       ...childStyle,
-      background: "rgba(0,0,255)",
-      margin: "100px 0 50px 0"
+      background: "rgba(0,0,255)"
     }}
   >
     Top Sites
@@ -112,6 +107,15 @@ const layoutConfigFull = {
   containerStyle: {
     gridTemplateRows: "100vh auto"
   },
+  transitions: {
+    "layout-mode": {
+      informational: {
+        containerStyle: {
+          gridTemplateRows: "auto auto"
+        }
+      }
+    }
+  },
   children: [
     {
       key: "background",
@@ -129,6 +133,11 @@ const layoutConfigFull = {
             height: "162px",
             zIndex: "2",
             overflow: "hidden"
+          }
+        },
+        "layout-mode": {
+          focus: {
+            hidden: true
           }
         }
       }
@@ -151,25 +160,67 @@ const layoutConfigFull = {
       key: "top-grid",
       layoutType: "grid",
       containerStyle: {
-        gridTemplateRows: "auto auto auto 1fr"
+        gridTemplateRows: "3fr 50px auto 50px 6fr"
       },
       childStyle: {
         alignSelf: "center",
         zIndex: 2
+      },
+      transitions: {
+        "layout-mode": {
+          inspirational: {
+            containerStyle: {
+              gridTemplateRows: "0 0 7fr 0 2fr"
+            }
+          }
+        }
       },
       row: 1,
       children: [
         {
           key: "logo",
           component: logo,
+          hidden: true,
           row: 1,
           childStyle: {
-            justifySelf: "center"
+            justifySelf: "center",
+            alignSelf: "end"
           },
           behaviors: {
+            animate: true,
             opacity: {
-              transitionGap: 100,
-              selfOffset: -200
+              transitionGap: 50,
+              targetOffset: 50
+            }
+          },
+          transitions: {
+            "layout-mode": {
+              focus: {
+                hidden: false
+              }
+            }
+          }
+        },
+        {
+          key: "search-background",
+          component: (
+            <div
+              style={{ background: "white", width: "100vw", height: "162px" }}
+            />
+          ),
+          hidden: true,
+          childStyle: {
+            position: "fixed",
+            top: "0"
+          },
+          transitions: {
+            "nav-sticky": {
+              hidden: false
+            },
+            "layout-mode": {
+              inspirational: {
+                hidden: true
+              }
             }
           }
         },
@@ -177,29 +228,48 @@ const layoutConfigFull = {
           key: "search",
           aliasKeys: ["nav-container"],
           component: search,
-          row: 2,
-          childStyle: {
-            justifySelf: "center"
-          },
-          behaviors: {
-            stick: {
-              selfOffset: 0
-            }
-          }
-        },
-        {
-          key: "top-sites",
-          component: topSites,
           row: 3,
           childStyle: {
             justifySelf: "center"
           },
           behaviors: {
+            stick: {
+              selfOffset: -50
+            },
+            animate: true
+          }
+          // transitions: {
+          //   inspirational: {
+          //     childStyle: {
+          //       alignSelf: "start"
+          //     }
+          //   }
+          // }
+        },
+        {
+          key: "top-sites",
+          component: topSites,
+          row: 5,
+          childStyle: {
+            justifySelf: "center",
+            alignSelf: "start"
+          },
+          behaviors: {
+            animate: true,
             opacity: {
               targetRefName: "search",
               targetSide: "bottom",
-              targetOffset: -50,
-              transitionGap: 75
+              transitionGap: 50,
+              targetOffset: 50
+            }
+          },
+          transitions: {
+            "layout-mode": {
+              informational: {
+                childStyle: {
+                  marginBottom: "50px"
+                }
+              }
             }
           }
         }
@@ -231,11 +301,7 @@ const layoutConfigFull = {
         zIndex: 1
       },
       behaviors: {
-        // stick: {
-        //   targetRefName: "search",
-        //   targetSide: "bottom",
-        //   selfOffset: 50
-        // }
+        animate: true
       }
     }
   ]
@@ -249,9 +315,17 @@ export class AnaheimLayoutApp extends React.Component {
 
     this.state = { layoutConfig: layoutConfigFull };
 
-    props.button1.addEventListener("click", () =>
-      this.setState({ layoutConfig: layoutConfigFull })
-    );
+    props.button1.addEventListener("click", () => {
+      Transitions.pub("layout-mode", "focus");
+    });
+
+    props.button2.addEventListener("click", () => {
+      Transitions.pub("layout-mode", "inspirational");
+    });
+
+    props.button3.addEventListener("click", () => {
+      Transitions.pub("layout-mode", "informational");
+    });
 
     // props.button2.addEventListener("click", () =>
     //   this.setState({

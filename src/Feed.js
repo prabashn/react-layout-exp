@@ -28,9 +28,15 @@ export class Feed extends React.Component {
                 stick: {
                   targetRefName: "nav-container",
                   targetSide: "bottom",
-                  transition: "nav-sticky"
+                  transition: "nav-sticky",
+                  targetOffset: 50
                 }
               }
+              // This seems to cause some deep recursive cloning during transitioning
+              // TODO: investigate why
+              // transitions: {
+              //   "layout-mode": {}
+              // }
             },
             {
               key: "river",

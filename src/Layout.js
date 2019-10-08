@@ -43,57 +43,33 @@ export class Layout extends React.Component {
 
   renderGridChildren(children) {
     return children.map(childConfig => {
-      const overrideStyles = {
+      childConfig = this.processTransitions(childConfig);
+
+      const styleObj = {
         gridRow:
           (childConfig.row || 1) + " / span " + (childConfig.rowSpan || 1),
         gridColumn:
-          (childConfig.col || 1) + " / span " + (childConfig.colSpan || 1)
+          (childConfig.col || 1) + " / span " + (childConfig.colSpan || 1),
+        ...childConfig.childStyle
       };
 
-      return this.renderChild(childConfig, overrideStyles);
+      return this.renderChild(childConfig, styleObj);
     });
   }
 
   renderStackChildren(children) {
     return children.map(childConfig => {
-      return this.renderChild(childConfig);
+      childConfig = this.processTransitions(childConfig);
+      return this.renderChild(childConfig, childConfig.childStyle);
     });
   }
 
-  renderChild(childConfig, overrideStyles) {
-    const {
-      layoutType,
-      key,
-      behaviors,
-      aliasKeys,
-      transitions,
-      childStyle
-    } = childConfig;
-
-    let transitionStyles;
-
-    if (transitions) {
-      for (let transitionName in transitions) {
-        // TODO: make this optimized so only the children that need to transition
-        // state/config needs to re-render. May need to create new 'wrapper child components'
-        // that are stateful, and listen to specific transition changes, and update
-        // internal state so only those components end up re-rendering instead of the
-        // entire layout tree.
-        Transitions.sub(transitionName, this.rerender);
-      }
-
-      // merge the base config with any transitions that are in-effect right now
-      childConfig = Transitions.getConfig(childConfig, transitions);
-      if (childConfig.childStyle !== childStyle) {
-        transitionStyles = childConfig.childStyle;
-      }
+  renderChild(childConfig, styleObj) {
+    if (childConfig.hidden) {
+      return null;
     }
 
-    const styleObj = this.mergeStyles(
-      childStyle,
-      transitionStyles,
-      overrideStyles
-    );
+    const { key, aliasKeys, layoutType, behaviors } = childConfig;
 
     // check if we're trying to render a child that's also another container.
     // If so, we still need to render it as a normal component with the wrapper
@@ -125,6 +101,26 @@ export class Layout extends React.Component {
       styleObj,
       component
     );
+  }
+
+  processTransitions(config) {
+    const { transitions } = config;
+
+    if (transitions) {
+      for (let transitionName in transitions) {
+        // TODO: make this optimized so only the children that need to transition
+        // state/config needs to re-render. May need to create new 'wrapper child components'
+        // that are stateful, and listen to specific transition changes, and update
+        // internal state so only those components end up re-rendering instead of the
+        // entire layout tree.
+        Transitions.sub(transitionName, this.rerender);
+      }
+
+      // merge the base config with any transitions that are in-effect right now
+      config = Transitions.getConfig(config, transitions);
+    }
+
+    return config;
   }
 
   mergeStyles(baseStyles, transitionStyles, overrideStyles) {
@@ -175,9 +171,10 @@ export class Layout extends React.Component {
   // }
 
   renderContainerCore(layoutConfig, childComponents, overrideStyles) {
-    const { containerStyle } = layoutConfig;
+    layoutConfig = this.processTransitions(layoutConfig);
+    const { containerStyle, hidden } = layoutConfig;
     const styleObj = { ...containerStyle, ...overrideStyles };
-    return <div style={styleObj}>{childComponents}</div>;
+    return !hidden ? <div style={styleObj}>{childComponents}</div> : null;
   }
 
   renderComponentCore(key, aliasKeys, behaviorConfig, styleObj, component) {
