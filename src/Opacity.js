@@ -15,18 +15,22 @@ export class Opacity extends Proximity {
   }
 
   calculateOpacity(status) {
-    const {
-      transitionGap = 0,
-      invertOpacity,
-      minOpacity = 0,
-      maxOpacity = 1
-    } = this.props;
+    const { transitionGap = 0, invertOpacity, maxOpacity = 1 } = this.props;
+    let { minOpacity = 0 } = this.props;
+
     const { selfEdge, targetEdge } = status;
 
     // sort to the leading and trailing edge so that leadiongEdge < trallingEdge
     const leadingEdge = transitionGap < 0 ? selfEdge + transitionGap : selfEdge;
     const trailingEdge =
       transitionGap < 0 ? selfEdge : selfEdge + transitionGap;
+
+    // if someone overrides max opacity to be 0, for example,
+    // we want to make sure the min opacity does not exceed the max...
+    // so automatically noramlize the min value
+    if (minOpacity > maxOpacity) {
+      minOpacity = maxOpacity;
+    }
 
     if (trailingEdge < targetEdge) {
       // both leading & trailing above target

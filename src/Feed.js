@@ -13,8 +13,7 @@ export class Feed extends React.Component {
         layoutConfig={{
           layoutType: "grid",
           containerStyle: {
-            background: "black",
-            width: "100vw"
+            background: "black"
           },
           children: [
             {

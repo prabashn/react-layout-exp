@@ -137,7 +137,7 @@ const layoutConfigFull = {
         },
         "layout-mode": {
           focus: {
-            hidden: true
+            hide: true
           }
         }
       }
@@ -180,7 +180,7 @@ const layoutConfigFull = {
         {
           key: "logo",
           component: logo,
-          hidden: true,
+          //hide: true,
           row: 1,
           childStyle: {
             justifySelf: "center",
@@ -189,6 +189,7 @@ const layoutConfigFull = {
           behaviors: {
             animate: true,
             opacity: {
+              maxOpacity: 0,
               transitionGap: 50,
               targetOffset: 50
             }
@@ -196,7 +197,12 @@ const layoutConfigFull = {
           transitions: {
             "layout-mode": {
               focus: {
-                hidden: false
+                //hide: false,
+                behaviors: {
+                  opacity: {
+                    maxOpacity: 1
+                  }
+                }
               }
             }
           }
@@ -208,18 +214,18 @@ const layoutConfigFull = {
               style={{ background: "white", width: "100vw", height: "162px" }}
             />
           ),
-          hidden: true,
+          hide: true,
           childStyle: {
             position: "fixed",
             top: "0"
           },
           transitions: {
             "nav-sticky": {
-              hidden: false
+              hide: false
             },
             "layout-mode": {
               inspirational: {
-                hidden: true
+                hide: true
               }
             }
           }
@@ -233,10 +239,10 @@ const layoutConfigFull = {
             justifySelf: "center"
           },
           behaviors: {
+            animate: true,
             stick: {
               selfOffset: -50
-            },
-            animate: true
+            }
           }
           // transitions: {
           //   inspirational: {
@@ -297,7 +303,7 @@ const layoutConfigFull = {
       component: river,
       row: 2,
       childStyle: {
-        justifySelf: "center",
+        justifySelf: "stretch",
         zIndex: 1
       },
       behaviors: {

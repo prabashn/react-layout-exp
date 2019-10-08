@@ -65,7 +65,7 @@ export class Layout extends React.Component {
   }
 
   renderChild(childConfig, styleObj) {
-    if (childConfig.hidden) {
+    if (childConfig.hide) {
       return null;
     }
 
@@ -146,35 +146,11 @@ export class Layout extends React.Component {
     return styleObj;
   }
 
-  // mergeStyles(baseStyles, transitionStyles, overrideStyles) {
-  //   const overrideInfo = this.overrideObjFast(
-  //     this.overrideObjFast({ orig: true, obj: baseStyles }, transitionStyles),
-  //     overrideStyles
-  //   );
-  //   return overrideInfo.obj;
-  // }
-
-  // overrideObjFast(baseInfo, overrideObj) {
-  //   if (!overrideObj || overrideObj === baseInfo.obj) {
-  //     return baseInfo;
-  //   } else {
-  //     if (baseInfo.orig) {
-  //       return {
-  //         orig: false,
-  //         obj: Object.assign({}, baseInfo.obj, overrideObj)
-  //       };
-  //     } else {
-  //       Object.assign(baseInfo.obj, overrideObj);
-  //       return baseInfo;
-  //     }
-  //   }
-  // }
-
   renderContainerCore(layoutConfig, childComponents, overrideStyles) {
     layoutConfig = this.processTransitions(layoutConfig);
-    const { containerStyle, hidden } = layoutConfig;
+    const { containerStyle, hide } = layoutConfig;
     const styleObj = { ...containerStyle, ...overrideStyles };
-    return !hidden ? <div style={styleObj}>{childComponents}</div> : null;
+    return !hide ? <div style={styleObj}>{childComponents}</div> : null;
   }
 
   renderComponentCore(key, aliasKeys, behaviorConfig, styleObj, component) {
@@ -212,19 +188,18 @@ export class Layout extends React.Component {
     }
 
     const { animate, stick, opacity } = behaviorConfig;
-    return this.getCachedBehaviors([childKey, animate, stick, opacity], () => {
-      const behaviors = [];
-      if (animate) {
-        behaviors.push(this.createBehavior(Animatable, animate));
-      }
-      if (stick) {
-        behaviors.push(this.createBehavior(Stickable, stick));
-      }
-      if (opacity) {
-        behaviors.push(this.createBehavior(Opacity, opacity));
-      }
-      return behaviors;
-    });
+    //return this.getCachedBehaviors([childKey, animate, stick, opacity], () => {
+    const behaviors = [];
+    if (animate) {
+      behaviors.push(this.createBehavior(Animatable, animate));
+    }
+    if (stick) {
+      behaviors.push(this.createBehavior(Stickable, stick));
+    }
+    if (opacity) {
+      behaviors.push(this.createBehavior(Opacity, opacity));
+    }
+    return behaviors;
   }
 
   createBehavior(behaviorClass, behaviorConfig) {
@@ -232,8 +207,8 @@ export class Layout extends React.Component {
     return { class: behaviorClass, props };
   }
 
-  getCachedBehaviors = memoize(
-    (_keys, getBehaviors) => getBehaviors(),
-    (keys, _getBehaviors) => keys.join("|")
-  );
+  // getCachedBehaviors = memoize(
+  //   (_keys, getBehaviors) => getBehaviors(),
+  //   (keys, _getBehaviors) => keys.join("|")
+  // );
 }
