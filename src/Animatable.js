@@ -1,7 +1,7 @@
 //import { Behavior } from "./Behavior";
 import { toPx, getRelativePosition } from "./positionHelper";
 import React from "react";
-import { BehaviorContext } from "./BehaviorContext";
+import { Viewport } from "./Viewport";
 
 const removeTransformStyle = {
   transition: null,
@@ -30,51 +30,42 @@ export class Animatable extends React.Component {
   constructor(props) {
     super(props);
     this.behaviorContext = props.behaviorContext;
+    this.containerRef = this.behaviorContext.containerRef;
   }
 
   render() {
     // in-case things have shifted/resized after the previous render/mount/update
     // re-calculate the container position before the new styles are applied by
     // BehaviorCollection
-    if (this.containerRef) {
-      this.calcCurrentPos(this.containerRef);
-    }
-
+    this.calcCurrentPos(this.containerRef);
     return this.props.children;
   }
 
   componentWillUnmount() {
     clearTimeout(this.resetTransitionTimeout);
-    this.behaviorContext.unsubscribe(this.behaviorContextChanged);
   }
 
-  componentDidMount() {
-    this.behaviorContext.subscribe(this.behaviorContextChanged);
+  mounted() {
+    this.calcCurrentPos();
   }
 
-  mounted(containerRef) {
-    this.containerRef = containerRef;
-    this.calcCurrentPos(containerRef);
-  }
-
-  updated(containerRef) {
+  updated() {
     // when updating, make sure we unset any currently animation related things
     // like clearing any pending transition-cleanup timers, and transition related styles.
     // so that we can calculate the current position with where it is actually supposed to
     // render without any in-progress translate animations.
-    this.containerRef = containerRef;
 
     clearTimeout(this.resetTransitionTimeout);
-    this.setStyle(containerRef, removeTransformStyle);
+    this.setStyle(this.containerRef, removeTransformStyle);
 
     // re-calculate the position after clearing out any transition related styles
-    this.calcCurrentPos(containerRef);
+    this.calcCurrentPos();
 
-    this.animate(containerRef);
+    this.animate(this.containerRef);
   }
 
-  calcCurrentPos(containerRef) {
-    if (!containerRef.current) {
+  calcCurrentPos() {
+    if (!this.containerRef.current) {
       return;
     }
 
@@ -87,7 +78,7 @@ export class Animatable extends React.Component {
     const {
       current: self,
       current: { offsetParent: parent }
-    } = containerRef;
+    } = this.containerRef;
 
     this.relativePos = getRelativePosition(self, parent);
 
@@ -108,6 +99,7 @@ export class Animatable extends React.Component {
     }
 
     // prepare to animate from previous to current!
+    // calculate fake relative position from new position to start the animation from
     const revLeft = this.prevPos.left - this.relativePos.left;
     const revTop = this.prevPos.top - this.relativePos.top;
 
@@ -119,9 +111,31 @@ export class Animatable extends React.Component {
 
     // TODO: make sure this is not triggering recursive update!
     if (this.behaviorContext) {
-      this.behaviorContext.setBehaviorContext({
-        animationsRunning: true
-      });
+      // freeze the the current position in the ref before we do the translation animation
+      // This would be it's new real position in the DOM, which other observers can use
+      // to do any calculations while the animation is running.
+      this.behaviorContext.eachRef(
+        ref => ref.suspend(true),
+        /* recurse so that we update all children under our behavior contex tree */
+        true
+      );
+
+      //Viewport.suspend(true);
+
+      // this.behaviorContext.updateBehaviorContext({
+      //   animationsRunning: true,
+      //   // store bounds at final resting point while animation is happening, so if
+      //   // anyone needs our position while animating, they can use this temporary value.
+      //   // TODO: we can potentially do this transparently by capturing all the refs under
+      //   //   a given behavior context, and then 'freezing' all of their current positions
+      //   //   before the animation starts, so that any other behavior trying to access the
+      //   //   the bounds while animation is progressing has access to the "frozen" position.
+      //   //   We could then 'unfreeze' all these refs under the behavior context being animated
+      //   //   to resume regular boundary calculation. We can potentially get this list via the
+      //   //   pushInnerRef API that we currently support (after making sure the container ref
+      //   //   is also pushed in this manner)
+      //   animationTargetBounds: containerRef.getCalcBounds()
+      // });
     }
 
     const transform = "translate(" + toPx(revLeft) + ", " + toPx(revTop) + ")";
@@ -132,7 +146,8 @@ export class Animatable extends React.Component {
     // now set the real transform with the transition (we need to do this in a setTimeout,
     // or animation doesn't seem to kick in most of the time - most likely because the browser
     // needs to apply the reverse transform first, and then get new frame to apply the animation transform to 0,0
-    setTimeout(() => {
+    //setTimeout(() => {
+    requestAnimationFrame(() => {
       this.setStyle(containerRef, {
         transition: "transform " + transitionTimeMs / 1000 + "s",
         // going to 0,0 is very important because any intermediate window resizing actions
@@ -145,11 +160,16 @@ export class Animatable extends React.Component {
       this.resetTransitionTimeout = setTimeout(() => {
         this.setStyle(containerRef, removeTransformStyle);
         // TODO: make sure this is not triggering recursive update!
-        this.behaviorContext.setBehaviorContext({
-          animationsRunning: false
-        });
+        // this.behaviorContext.updateBehaviorContext({
+        //   animationsRunning: false
+        // });
+
+        // now that the animation is finished, 'unfreeze' so the new location
+        // will be calculated as normal next time it's queried.
+        this.behaviorContext.eachRef(ref => ref.resume(), true);
+        //requestAnimationFrame(() => Viewport.resume());
       }, transitionTimeMs);
-    }, 0);
+    }); //, 0);
 
     console.log(
       "previous: " +

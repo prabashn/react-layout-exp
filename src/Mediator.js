@@ -13,7 +13,7 @@ export const mediator = {
     if (subs) {
       const index = subs.indexOf(callback);
       if (index >= 0) {
-        subs.spliice(index, 1);
+        subs.splice(index, 1);
       }
     }
   },

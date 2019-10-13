@@ -1,5 +1,8 @@
 import React from "react";
+import { Ref } from "./Ref";
 import { GlobalLayoutContext } from "./GlobalLayoutContext";
+import { BehaviorContext } from "./BehaviorContext";
+import { tryRemoveItem, tryAddItem } from "./arrayHelpers";
 /**
  * This component just serves as a wrapper for non-animated components
  * so that we have an intermediary to apply the grid positioning styling
@@ -10,63 +13,66 @@ import { GlobalLayoutContext } from "./GlobalLayoutContext";
  * TODO: use this as a base class for GridAnimatable to apply the same perf optimizations.
  */
 export class BehaviorCollection extends React.Component {
-  containerRef = null;
+  containerRef = Ref.createRef();
   behaviorRefs = [];
   behaviorContext = {};
-  innerRefs = [];
 
   constructor(props) {
     super(props);
 
-    const subscribers = [];
-    this.setBehaviorContext({
+    this.updateBehaviorContext({
       behaviorKey: props.behaviorKey,
-
-      // from global context
-      getChildRef: null,
-      getBehaviorContext: null,
-
-      setBehaviorContext: this.setBehaviorContext,
+      getBehaviorContext: GlobalLayoutContext.getBehaviorContext,
+      containerRef: this.containerRef,
+      updateBehaviorContext: this.updateBehaviorContext,
       animationsEnabled: true,
-      animationsRunning: false,
-      subscribers,
+      innerRefs: [],
+      //animationsRunning: false,
+      //animationTargetBounds: null,
+      childBehaviorContexts: [],
+      currentParentBehaviorContext: null,
+      eachRef: (callback, recurseChildren) =>
+        eachRef(this.behaviorContext, callback, recurseChildren),
       getInnerRef: () =>
-        this.innerRefs[this.innerRefs.length - 1] || this.containerRef,
-      pushInnerRef: ref => {
-        const refIndex = this.innerRefs.indexOf(ref);
-        if (refIndex >= 0) {
-          this.innerRefs[refIndex] = ref;
-        } else {
-          this.innerRefs.push(ref);
-        }
-      },
-      popInnerRef: ref => {
-        const refIndex = this.innerRefs.indexOf(ref);
-        if (refIndex >= 0) {
-          this.innerRefs.splice(refIndex, 1);
-        }
-      },
-      subscribe: callback => {
-        // TODO: debug why this is getting called multiple times
-        if (!subscribers.indexOf(callback)) {
-          subscribers.push(callback);
-        }
-      },
-      unsubscribe: callback => {
-        // TODO: debug -- same as above
-        const index = subscribers.indexOf(callback);
-        if (index >= 0) {
-          subscribers.splice(index, 1);
-        }
-      }
+        this.behaviorContext.innerRefs[
+          this.behaviorContext.innerRefs.length - 1
+        ] || this.containerRef,
+      pushInnerRef: ref => tryAddItem(this.behaviorContext.innerRefs, ref),
+      popInnerRef: ref => tryRemoveItem(this.behaviorContext.innerRefs, ref),
+      setParentContext: this.setParentContext
     });
   }
 
-  setBehaviorContext = newContext => {
+  updateBehaviorContext = newContext => {
     Object.assign(this.behaviorContext, newContext);
-    this.behaviorContext.subscribers.forEach(subscriber => {
-      subscriber(this.behaviorContext);
-    });
+  };
+
+  setParentContext = parentBehaviorContext => {
+    const { currentParentBehaviorContext } = this.behaviorContext;
+
+    // if same context, nothing to do
+    if (currentParentBehaviorContext === parentBehaviorContext) {
+      return;
+    }
+
+    // remove from old context
+    if (currentParentBehaviorContext) {
+      tryRemoveItem(
+        currentParentBehaviorContext.childBehaviorContexts,
+        this.behaviorContext
+      );
+    }
+
+    // add to new context
+    if (parentBehaviorContext) {
+      tryAddItem(
+        parentBehaviorContext.childBehaviorContexts,
+        this.behaviorContext
+      );
+    }
+
+    // update current state, so we have it for next time it changes again
+    this.behaviorContext.currentParentBehaviorContext = parentBehaviorContext;
   };
 
   render() {
@@ -77,9 +83,7 @@ export class BehaviorCollection extends React.Component {
       ...otherProps
     } = this.props;
 
-    // reset the inner ref, so when we re-render, the new one will be set again
-    // by the innermost child behavior first
-    this.innerRef = null;
+    this.behaviorContext.pushInnerRef(this.containerRef);
 
     var WrappedComponent = children;
 
@@ -100,24 +104,29 @@ export class BehaviorCollection extends React.Component {
       );
     });
 
-    this.setBehaviorContext({
-      getChildRef: GlobalLayoutContext.getChildRef,
-      getBehaviorContext: GlobalLayoutContext.getBehaviorContext
-    });
-
     // child ref for this behavior's outer-most container
-    this.containerRef = GlobalLayoutContext.getChildRef(behaviorKey);
     return (
-      <div ref={this.containerRef} {...otherProps} id={behaviorKey}>
-        {WrappedComponent}
-      </div>
+      // parent context (if any)
+      <BehaviorContext.Consumer>
+        {parentBehaviorContext => {
+          this.behaviorContext.setParentContext(parentBehaviorContext);
+          return (
+            <div ref={this.containerRef.ref} {...otherProps} id={behaviorKey}>
+              {/* inner context */}
+              <BehaviorContext.Provider value={this.behaviorContext}>
+                {WrappedComponent}
+              </BehaviorContext.Provider>
+            </div>
+          );
+        }}
+      </BehaviorContext.Consumer>
     );
   }
 
   componentDidMount() {
     this.behaviorRefs.forEach(behaviorRef => {
       const { current } = behaviorRef;
-      current && current.mounted && current.mounted(this.containerRef);
+      current && current.mounted && current.mounted();
     });
     console.log("componentDidMount " + this.props.behaviorKey);
   }
@@ -125,8 +134,17 @@ export class BehaviorCollection extends React.Component {
   componentDidUpdate() {
     this.behaviorRefs.forEach(behaviorRef => {
       const { current } = behaviorRef;
-      current && current.updated && current.updated(this.containerRef);
+      current && current.updated && current.updated();
     });
     console.log("componentDidUpdate " + this.props.behaviorKey);
+  }
+}
+
+function eachRef(behaviorContext, callback, recurseChildren) {
+  behaviorContext.innerRefs.forEach(callback);
+  if (recurseChildren) {
+    behaviorContext.childBehaviorContexts.forEach(childContext => {
+      eachRef(childContext, callback, recurseChildren);
+    });
   }
 }

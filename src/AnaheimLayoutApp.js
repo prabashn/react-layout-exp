@@ -188,6 +188,7 @@ const layoutConfigFull = {
           },
           behaviors: {
             animate: true,
+            //stick: true
             opacity: {
               maxOpacity: 0,
               transitionGap: 50,
@@ -243,14 +244,14 @@ const layoutConfigFull = {
             stick: {
               selfOffset: -50
             }
+          },
+          transitions: {
+            inspirational: {
+              childStyle: {
+                alignSelf: "start"
+              }
+            }
           }
-          // transitions: {
-          //   inspirational: {
-          //     childStyle: {
-          //       alignSelf: "start"
-          //     }
-          //   }
-          // }
         },
         {
           key: "top-sites",
@@ -322,15 +323,15 @@ export class AnaheimLayoutApp extends React.Component {
     this.state = { layoutConfig: layoutConfigFull };
 
     props.button1.addEventListener("click", () => {
-      Transitions.pub("layout-mode", "focus");
+      Transitions.pub("layout-mode", "focus", true);
     });
 
     props.button2.addEventListener("click", () => {
-      Transitions.pub("layout-mode", "inspirational");
+      Transitions.pub("layout-mode", "inspirational", true);
     });
 
     props.button3.addEventListener("click", () => {
-      Transitions.pub("layout-mode", "informational");
+      Transitions.pub("layout-mode", "informational", true);
     });
 
     // props.button2.addEventListener("click", () =>

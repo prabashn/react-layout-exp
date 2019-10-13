@@ -1,16 +1,27 @@
 import { mediator } from "./Mediator";
 import { merge, cloneDeep } from "lodash-es";
+import { Viewport } from "./Viewport";
 
 const transitionState = {};
 
 const TransitionMediatorPrefix = "transition-";
 export const Transitions = {
-  pub: (transitionName, state) => {
+  pub: (transitionName, state, resetViewport) => {
     // update persistent state map
+    if (resetViewport) {
+      window.scrollTo(0, 0);
+      Viewport.calcBounds();
+      requestAnimationFrame(() =>
+        Transitions.pub(transitionName, state, false)
+      );
+      return;
+    }
 
+    // get existing state for the transition
     var curState = transitionState[transitionName];
+
+    // if current state is same as new, no need to do / publish anything
     if (curState === state) {
-      // if current state same as new, no need to do / publish anything
       return;
     }
 
@@ -28,13 +39,22 @@ export const Transitions = {
       state
     );
 
+    // also dispatch global action, in case anyone is listening
+    mediator.pub(TransitionMediatorPrefix + "any", transitionName, state);
+
     console.log("Transitioned state := " + JSON.stringify(transitionState));
   },
   unsub: (transitionName, callback) => {
-    mediator.unsub(TransitionMediatorPrefix + transitionName, callback);
+    mediator.unsub(
+      TransitionMediatorPrefix + (transitionName || "any"),
+      callback
+    );
   },
   sub: (transitionName, callback) => {
-    mediator.sub(TransitionMediatorPrefix + transitionName, callback);
+    mediator.sub(
+      TransitionMediatorPrefix + (transitionName || "any"),
+      callback
+    );
   },
   getConfig: (baseConfig, transitionConfig) => {
     var mergedConfig;

@@ -50,7 +50,7 @@ export class Opacity extends Proximity {
   }
 
   updateOpacity(opacity, invert) {
-    const element = this.getSelfElement();
+    const element = this.getSelfRef().current;
     if (!element) {
       return;
     }
@@ -74,15 +74,15 @@ export class Opacity extends Proximity {
         opacity: null,
         visibility: "hidden"
       });
-    } else if (opacity >= 1) {
-      Object.assign(element.style, {
-        opacity: null,
-        visibility: null
-      });
-    } else {
+    } else if (opacity < 1) {
       Object.assign(element.style, {
         opacity,
         visibility: "visible"
+      });
+    } else {
+      Object.assign(element.style, {
+        opacity: null,
+        visibility: null
       });
     }
   }

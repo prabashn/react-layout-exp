@@ -3,13 +3,14 @@ import { Animatable } from "./Animatable";
 import { Stickable } from "./Stickable";
 import { Opacity } from "./Opacity";
 import { BehaviorCollection } from "./BehaviorCollection";
-import { memoize, cloneDeep } from "lodash-es";
 import { GlobalLayoutContext } from "./GlobalLayoutContext";
 import { Transitions } from "./Transitions";
+import { Ref } from "./Ref";
 
 export class Layout extends React.Component {
   // map of all known transition configs. key = transition name, value = Map(child keys))
   //transitionNameToChildKeyMap = new Map();
+  subbedTransitions = {};
 
   render() {
     return this.renderContainer(this.props.layoutConfig);
@@ -106,21 +107,24 @@ export class Layout extends React.Component {
   processTransitions(config) {
     const { transitions } = config;
 
-    if (transitions) {
-      for (let transitionName in transitions) {
-        // TODO: make this optimized so only the children that need to transition
-        // state/config needs to re-render. May need to create new 'wrapper child components'
-        // that are stateful, and listen to specific transition changes, and update
-        // internal state so only those components end up re-rendering instead of the
-        // entire layout tree.
-        Transitions.sub(transitionName, this.rerender);
-      }
-
-      // merge the base config with any transitions that are in-effect right now
-      config = Transitions.getConfig(config, transitions);
+    if (!transitions) {
+      return config;
     }
 
-    return config;
+    for (let transitionName in transitions) {
+      // TODO: make this optimized so only the children that need to transition
+      // state/config needs to re-render. May need to create new 'wrapper child components'
+      // that are stateful, and listen to specific transition changes, and update
+      // internal state so only those components end up re-rendering instead of the
+      // entire layout tree.
+      Transitions.sub(transitionName, this.rerender);
+
+      // save the subbed names for unsubbing when unmounting
+      this.subbedTransitions[transitionName] = true;
+    }
+
+    // merge the base config with any transitions that are in-effect right now
+    return Transitions.getConfig(config, transitions);
   }
 
   mergeStyles(baseStyles, transitionStyles, overrideStyles) {
@@ -159,9 +163,9 @@ export class Layout extends React.Component {
 
     // scenario 1: component has no behaviors
     if (!behaviors || !behaviors.length) {
-      let childRef = GlobalLayoutContext.getChildRef(key);
+      let childRef = Ref.createRef();
       return (
-        <div key={key} style={styleObj} ref={childRef} id={key}>
+        <div key={key} style={styleObj} ref={childRef.ref} id={key}>
           {component}
         </div>
       );
@@ -205,6 +209,12 @@ export class Layout extends React.Component {
   createBehavior(behaviorClass, behaviorConfig) {
     let props = typeof behaviorConfig === "object" ? behaviorConfig : undefined;
     return { class: behaviorClass, props };
+  }
+
+  componentWillUnmount() {
+    for (let transitionName in this.subbedTransitions) {
+      Transitions.unsub(transitionName, this.rerender);
+    }
   }
 
   // getCachedBehaviors = memoize(
