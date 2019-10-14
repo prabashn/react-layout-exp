@@ -2,6 +2,7 @@ import { uniqueId, throttle } from "lodash-es";
 import { Viewport } from "./Viewport";
 import { Transitions } from "./Transitions";
 import { getOffsetRect, rectsEqual, getRelativeRect } from "./positionHelper";
+import { WeakMapEx } from "./WeakMapEx";
 
 const scrollSensitiveRefs = [];
 const resizeSensitiveRefs = [];
@@ -11,7 +12,7 @@ Viewport.sub({
   resize: () => recalcAndNotifyChangedRefs(resizeSensitiveRefs)
 });
 
-Transitions.sub(null, () => {
+Transitions.subAny(() => {
   // make sure to re-compute the viewport as shifting between
   // transition state can easily change the viewport size etc, as content
   // shfits around. Do this under a timeout to let the final destinations
@@ -23,28 +24,22 @@ Transitions.sub(null, () => {
 });
 
 function recalcAndNotifyChangedRefs(refList) {
-  const refCallbacks = new WeakMap();
-  const uniqueCallbacks = [];
+  const refCallbacks = new WeakMapEx();
 
   refList.forEach(ref => {
     if (ref.calcBounds()) {
       // aggregate all bound changed ref callbacks
-      // in a unique list, so that the same callback
-      // listening to multiple refs will get a single
-      // invocation even if multiple refs change.
+      // so that the same callback listening to multiple
+      // refs will only get a single invocation even if
+      // multiple observed refs change.
       ref.callbacks.forEach(callback => {
-        // if we haven't seen this callback before,
-        // add it to the unique list.
-        if (!refCallbacks.has(callback)) {
-          refCallbacks.set(callback, true);
-          uniqueCallbacks.push(callback);
-        }
+        refCallbacks.set(callback, true);
       });
     }
   });
 
   // call all notifying callbacks in bulk
-  uniqueCallbacks.forEach(callback => callback());
+  refCallbacks.keys.forEach(callback => callback());
 }
 
 export class Ref {
@@ -55,6 +50,7 @@ export class Ref {
   callbacks = [];
   offsetBounds;
   suspended;
+  cssTransitions = {};
 
   // backwards compat with React.createRef().current
   static createRef({ key } = {}) {
@@ -170,5 +166,40 @@ export class Ref {
     return (
       this.offsetBounds || (this.offsetBounds = getOffsetRect(this.current))
     );
+  }
+
+  setTransition(cssProperty, value, duration) {
+    this.cssTransitions[cssProperty] = { duration, value };
+    this.updateTransitions();
+  }
+
+  removeTransition(cssProperty, value) {
+    if (this.cssTransitions[cssProperty]) {
+      this.setTransition(cssProperty, value || null, null);
+      delete this.cssTransitions[cssProperty];
+    }
+  }
+
+  updateTransitions() {
+    const cssProps = Object.keys(this.cssTransitions);
+    if (!cssProps.length) {
+      return;
+    }
+
+    const styleObj = {};
+    const transitions = [];
+
+    cssProps.forEach(cssProp => {
+      let { duration: propDuration, value: propValue } = this.cssTransitions[
+        cssProp
+      ];
+      if (propDuration) {
+        transitions.push(cssProp + " " + propDuration + "ms");
+      }
+      styleObj[cssProp] = propValue;
+    });
+
+    styleObj.transition = transitions.length ? transitions.join(", ") : null;
+    Object.assign(this.current.style, styleObj);
   }
 }

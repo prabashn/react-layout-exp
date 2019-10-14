@@ -10,7 +10,8 @@ import { Ref } from "./Ref";
 export class Layout extends React.Component {
   // map of all known transition configs. key = transition name, value = Map(child keys))
   //transitionNameToChildKeyMap = new Map();
-  subbedTransitions = {};
+  childKeyToTransitionGroups = {};
+  //keyToTransitionSubs = {};
 
   render() {
     return this.renderContainer(this.props.layoutConfig);
@@ -105,22 +106,35 @@ export class Layout extends React.Component {
   }
 
   processTransitions(config) {
-    const { transitions } = config;
+    const { transitions, key } = config;
 
     if (!transitions) {
       return config;
     }
 
-    for (let transitionName in transitions) {
-      // TODO: make this optimized so only the children that need to transition
-      // state/config needs to re-render. May need to create new 'wrapper child components'
-      // that are stateful, and listen to specific transition changes, and update
-      // internal state so only those components end up re-rendering instead of the
-      // entire layout tree.
-      Transitions.sub(transitionName, this.rerender);
+    //keyToTransitionSubs[config.key] = new Transition();
 
-      // save the subbed names for unsubbing when unmounting
-      this.subbedTransitions[transitionName] = true;
+    // for (let transitionName in transitions) {
+    //   Transitions.sub(transitionName, this.rerender);
+
+    //   // save the subbed names for unsubbing when unmounting
+    //   this.subbedTransitionGroups[transitionName] = true;
+    // }
+
+    // TODO: make this optimized so only the children that need to transition
+    // state/config needs to re-render. May need to create new 'wrapper child components'
+    // that are stateful, and listen to specific transition changes, and update
+    // internal state so only those components end up re-rendering instead of the
+    // entire layout tree.
+
+    // create transition groups only once (since they should be considered as invariant
+    // during transitions)
+    let transitionGroup = this.childKeyToTransitionGroups[key];
+    if (!transitionGroup) {
+      const transitionNames = Object.keys(transitions);
+      transitionGroup = this.childKeyToTransitionGroups[
+        key
+      ] = Transitions.subMany(transitionNames, this.rerender);
     }
 
     // merge the base config with any transitions that are in-effect right now
@@ -194,6 +208,7 @@ export class Layout extends React.Component {
     const { animate, stick, opacity } = behaviorConfig;
     //return this.getCachedBehaviors([childKey, animate, stick, opacity], () => {
     const behaviors = [];
+
     if (animate) {
       behaviors.push(this.createBehavior(Animatable, animate));
     }
@@ -212,8 +227,8 @@ export class Layout extends React.Component {
   }
 
   componentWillUnmount() {
-    for (let transitionName in this.subbedTransitions) {
-      Transitions.unsub(transitionName, this.rerender);
+    for (let childKey in this.childKeyToTransitionGroups) {
+      Transitions.unsub(this.childKeyToTransitionGroups[childKey]);
     }
   }
 

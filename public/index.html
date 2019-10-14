@@ -1,16 +1,19 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-  <meta name="theme-color" content="#000000">
-  <!--
+  <head>
+    <meta charset="utf-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, shrink-to-fit=no"
+    />
+    <meta name="theme-color" content="#000000" />
+    <!--
     manifest.json provides metadata used when your web app is added to the
     homescreen on Android. See https://developers.google.com/web/fundamentals/engage-and-retain/web-app-manifest/
   -->
-  <link rel="manifest" href="%PUBLIC_URL%/manifest.json">
-  <link rel="shortcut icon" href="%PUBLIC_URL%/favicon.ico">
-  <!--
+    <link rel="manifest" href="%PUBLIC_URL%/manifest.json" />
+    <link rel="shortcut icon" href="%PUBLIC_URL%/favicon.ico" />
+    <!--
     Notice the use of %PUBLIC_URL% in the tags above.
     It will be replaced with the URL of the `public` folder during the build.
     Only files inside the `public` folder can be referenced from the HTML.
@@ -19,36 +22,36 @@
     work correctly both with client-side routing and a non-root public URL.
     Learn how to configure a non-root public URL by running `npm run build`.
   -->
-  <title>React App</title>
-  
-  <style>
-    body {
-      margin: 0;
-    }
-    @media  all and  (min-width: 800px)  {
-      #ts {
-        width: 800px;
-        height: 100px;
-      }
-    }
-    @media all and (max-width: 800px) {
-      #ts {
-        border: 2px solid red;
-        width: 400px;
-        height: 200px;
-      }
-    }
-  </style>
+    <title>React App</title>
 
-</head>
-<body>
-  <div style="position: fixed; z-index: 4">
-    <button id="btn1">Layout 1</button>
-    <button id="btn2">Layout 2</button>
-    <button id="btn3">Layout 3</button>
-    <button id="btn4">Instance layout</button>
-  </div>
-  <div id="app"></div>
-  <script src="index.js"></script>
-</body>
+    <style>
+      body {
+        margin: 0;
+      }
+      @media all and (min-width: 800px) {
+        #ts {
+          width: 800px;
+          height: 100px;
+        }
+      }
+      @media all and (max-width: 800px) {
+        #ts {
+          border: 2px solid red;
+          width: 400px;
+          height: 200px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div style="position: fixed; z-index: 4">
+      <button id="btn1">Focused</button>
+      <button id="btn2">Inspirational</button>
+      <button id="btn3">Informational</button>
+      <button id="btn4">Top Sites (on/off)</button>
+      <button id="btn5">River (on/headings/scroll)</button>
+    </div>
+    <div id="app"></div>
+    <script src="index.js"></script>
+  </body>
 </html>

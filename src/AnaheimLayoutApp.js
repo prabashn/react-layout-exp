@@ -160,7 +160,7 @@ const layoutConfigFull = {
       key: "top-grid",
       layoutType: "grid",
       containerStyle: {
-        gridTemplateRows: "3fr 50px auto 50px 6fr"
+        gridTemplateRows: "auto 50px auto 50px auto"
       },
       childStyle: {
         alignSelf: "center",
@@ -227,6 +227,9 @@ const layoutConfigFull = {
             "layout-mode": {
               inspirational: {
                 hide: true
+              },
+              informational: {
+                hide: true
               }
             }
           }
@@ -264,17 +267,42 @@ const layoutConfigFull = {
           behaviors: {
             animate: true,
             opacity: {
+              maxOpacity: 1,
               targetRefName: "search",
               targetSide: "bottom",
+              // do not make larger than 50  or else the opacity will start immediately
+              // because the search's margin-bottom is only 50
               transitionGap: 50,
               targetOffset: 50
             }
           },
           transitions: {
             "layout-mode": {
+              // inspirational: {
+              //   behaviors: {
+              //     opacity: {
+              //       transitionGap: 150,
+              //       targetOffset: 150
+              //     }
+              //   }
+              // },
               informational: {
                 childStyle: {
                   marginBottom: "50px"
+                }
+              }
+            },
+            "topsite-mode": {
+              off: {
+                row: 4,
+                rowSpan: 2,
+                childStyle: {
+                  alignSelf: "end"
+                },
+                behaviors: {
+                  opacity: {
+                    maxOpacity: 0
+                  }
                 }
               }
             }
@@ -297,6 +325,15 @@ const layoutConfigFull = {
           selfSide: "bottom",
           transitionGap: 100
         }
+      },
+      transitions: {
+        "layout-mode": {
+          informational: {
+            opacity: {
+              maxOpacity: 0
+            }
+          }
+        }
       }
     },
     {
@@ -317,63 +354,62 @@ const layoutConfigFull = {
 export class AnaheimLayoutApp extends React.Component {
   layoutRef = React.createRef();
 
+  topSiteModes = ["on", "off"];
+  topSiteModeIndex = -1;
+
+  riverModes = ["on", "headings", "scroll"];
+  riverModeIndex = -1;
+
   constructor(props) {
     super(props);
 
     this.state = { layoutConfig: layoutConfigFull };
 
     props.button1.addEventListener("click", () => {
-      Transitions.pub("layout-mode", "focus", true);
+      Transitions.pubMany(
+        {
+          "layout-mode": "focus",
+          "topsite-mode": "on"
+        },
+        true
+      );
     });
 
     props.button2.addEventListener("click", () => {
-      Transitions.pub("layout-mode", "inspirational", true);
+      Transitions.pubMany(
+        {
+          "layout-mode": "inspirational",
+          "topsite-mode": "on"
+        },
+        true
+      );
     });
 
     props.button3.addEventListener("click", () => {
-      Transitions.pub("layout-mode", "informational", true);
+      Transitions.pubMany(
+        {
+          "layout-mode": "informational",
+          "topsite-mode": "on"
+        },
+        true
+      );
     });
 
-    // props.button2.addEventListener("click", () =>
-    //   this.setState({
-    //     layoutConfig: swapColsAndRowsConfig(this.state.layoutConfig)
-    //   })
-    // );
+    props.button4.addEventListener("click", () => {
+      this.topSiteModeIndex =
+        (this.topSiteModeIndex + 1) % this.topSiteModes.length;
 
-    // props.button3.addEventListener(
-    //   "click",
-    //   () => this.setState({ layoutConfig: swapOneChild(this.state.layoutConfig) })
-    //   //this.setState({ layoutConfig: layoutConfig2 })
-    // );
+      Transitions.pub(
+        "topsite-mode",
+        this.topSiteModes[this.topSiteModeIndex],
+        true
+      );
+    });
 
-    // props.button4.addEventListener("click", () =>
-    //   // TODO: we can do intersection observer on these raw elements now to do any custom handling at the DOM level
-    //   // TODO: try implement sticky behavior
-    //   // TODO: try implement sub-grid
-    //   alert([
-    //     this.layoutRef.current.getChildWrapperRef("child1").current.tagName,
-    //     this.layoutRef.current.getChildWrapperRef("child2").current.tagName,
-    //     this.layoutRef.current.getChildWrapperRef("child3").current.tagName,
-    //     this.layoutRef.current.getChildWrapperRef("child4").current.tagName
-    //   ])
-    // );
-
-    // mediator.sub("updateState", (childKey, propName, value) => {
-    //   const stateConfig = this.state.layoutConfig;
-
-    //   var config = { ...stateConfig, children: [...stateConfig.children] };
-
-    //   config.children.forEach((child, index) => {
-    //     if (child.key === childKey) {
-    //       config.children[index] = {
-    //         ...child,
-    //         [propName]: value
-    //       };
-    //     }
-    //   });
-
-    //   this.setState({ layoutConfig: config });
-    // });
+    props.button5.addEventListener("click", () => {
+      this.riverModeIndex = (this.riverModeIndex + 1) % this.riverModes.length;
+      Transitions.pub("river-mode", this.riverModes[this.riverModeIndex], true);
+    });
   }
 
   render() {

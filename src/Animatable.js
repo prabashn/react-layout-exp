@@ -148,17 +148,25 @@ export class Animatable extends React.Component {
     // needs to apply the reverse transform first, and then get new frame to apply the animation transform to 0,0
     //setTimeout(() => {
     requestAnimationFrame(() => {
-      this.setStyle(containerRef, {
-        transition: "transform " + transitionTimeMs / 1000 + "s",
+      containerRef.setTransition(
+        "transform",
         // going to 0,0 is very important because any intermediate window resizing actions
         // will automatically be corrected on-the-fly by the native CSS animation system.
-        transform: "translate(0, 0)"
-      });
+        "translate(0, 0)",
+        transitionTimeMs
+      );
+      // this.setStyle(containerRef, {
+      //   transition: "transform " + transitionTimeMs / 1000 + "s",
+      //   // going to 0,0 is very important because any intermediate window resizing actions
+      //   // will automatically be corrected on-the-fly by the native CSS animation system.
+      //   transform: "translate(0, 0)"
+      // });
 
       // save the timer handle so we can cancel it if we get another request to reposition.
       // Otherwise this timer will kick in the middle of that animation and mess up the animation.
       this.resetTransitionTimeout = setTimeout(() => {
-        this.setStyle(containerRef, removeTransformStyle);
+        containerRef.removeTransition("transform");
+        //this.setStyle(containerRef, removeTransformStyle);
         // TODO: make sure this is not triggering recursive update!
         // this.behaviorContext.updateBehaviorContext({
         //   animationsRunning: false
