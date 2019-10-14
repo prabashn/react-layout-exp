@@ -14,6 +14,7 @@ const TransitionMediatorPrefix = "transition-";
 const TransitionMediatorAny = TransitionMediatorPrefix + "any";
 
 export const Transitions = {
+  getState: transitionName => transitionState[transitionName],
   subAny: callback => mediator.sub(TransitionMediatorAny, callback),
   unsubAny: callback => mediator.unsub(TransitionMediatorAny, callback),
 

@@ -138,6 +138,12 @@ export class BehaviorCollection extends React.Component {
     });
     console.log("componentDidUpdate " + this.props.behaviorKey);
   }
+
+  componentWillUnmount() {
+    Ref.dispose(this.containerRef);
+    this.behaviorRefs.length = 0;
+    this.behaviorContext.setParentContext(null);
+  }
 }
 
 function eachRef(behaviorContext, callback, recurseChildren) {

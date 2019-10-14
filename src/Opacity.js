@@ -105,6 +105,11 @@ export class Opacity extends Proximity {
   }
 
   logOpacity(ref, status) {
+    // guard against disposed ref
+    if (!ref.current) {
+      return;
+    }
+
     const { transition, opacity } = ref.current.style;
     console.log(
       "opacity->" +

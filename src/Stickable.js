@@ -6,11 +6,15 @@ import { Proximity } from "./Proximity";
 import { Transitions } from "./Transitions";
 import { Viewport } from "./Viewport";
 
+let uid = 0;
+
 //export class Stickable extends Behavior {
 export class Stickable extends Proximity {
   stickyContainerRef = null;
   sizeHelperRef = null;
   isSticky = false;
+
+  _id = uid++;
 
   constructor(props) {
     super(props);
@@ -29,15 +33,19 @@ export class Stickable extends Proximity {
         <div ref={this.stickyContainerRef.ref}>{this.props.children}</div>
         <div
           ref={this.sizeHelperRef.ref}
-          style={{ display: "none", outline: "3px solid red" }}
+          style={{ display: "none" }}
+          //style={{ display: "none", outline: "3px solid red" }}
         />
       </React.Fragment>
     );
   }
 
   componentWillUnmount() {
+    this.pubStateTransition(false);
     this.behaviorContext.popInnerRef(this.stickyContainerRef);
-    super.componentDidUpdate();
+    Ref.dispose(this.stickyContainerRef);
+    Ref.dispose(this.sizeHelperRef);
+    super.componentWillUnmount();
   }
 
   onStatusChanged(status) {
@@ -82,6 +90,12 @@ export class Stickable extends Proximity {
     // direction: top/bottom = 0, left/right = 1
     // We only handle vertical sticky, hence the check
     if (status.direction !== 0) {
+      return;
+    }
+
+    // sometimes some timeout comes after we dispose the behavior
+    // and attempts to update the stick status -- detect and bail out
+    if (!this.stickyContainerRef.current) {
       return;
     }
 
@@ -171,9 +185,14 @@ export class Stickable extends Proximity {
     stick ? this.sizeHelperRef.resume() : this.sizeHelperRef.suspend();
     Ref.updateRef(this.stickyContainerRef, { scrollSensitive: stick });
     this.behaviorContext.updateBehaviorContext({ animationsEnabled: !stick });
+    this.pubStateTransition(stick);
+  }
 
+  pubStateTransition(stick) {
     const { transition } = this.props;
     if (transition) {
+      // set the transition state's value boolean (true/false)
+      //  to the current stick state
       Transitions.pub(transition, stick);
     }
   }

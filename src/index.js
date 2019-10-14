@@ -8,7 +8,8 @@ let appProps = {
   button2: document.getElementById("btn2"),
   button3: document.getElementById("btn3"),
   button4: document.getElementById("btn4"),
-  button5: document.getElementById("btn5")
+  button5: document.getElementById("btn5"),
+  button6: document.getElementById("btn6")
 };
 
 //ReactDOM.render(<LayoutApp {...appProps} />, document.getElementById("app"));

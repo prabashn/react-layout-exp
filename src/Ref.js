@@ -3,6 +3,7 @@ import { Viewport } from "./Viewport";
 import { Transitions } from "./Transitions";
 import { getOffsetRect, rectsEqual, getRelativeRect } from "./positionHelper";
 import { WeakMapEx } from "./WeakMapEx";
+import { tryRemoveItem, tryAddItem } from "./arrayHelpers";
 
 const scrollSensitiveRefs = [];
 const resizeSensitiveRefs = [];
@@ -51,6 +52,7 @@ export class Ref {
   offsetBounds;
   suspended;
   cssTransitions = {};
+  disposed;
 
   // backwards compat with React.createRef().current
   static createRef({ key } = {}) {
@@ -70,21 +72,24 @@ export class Ref {
     }
   }
 
+  static dispose(ref) {
+    if (ref) {
+      ref.callbacks.length = 0;
+      ref.disposed = true;
+      tryRemoveItem(scrollSensitiveRefs, ref);
+      tryRemoveItem(resizeSensitiveRefs, ref);
+    }
+  }
+
   static observe(ref, callback) {
     // TODO: add support for specific side / size observations
     //  to optimize unnecessary callback invocation
-
-    if (ref && ref.callbacks.indexOf(callback) < 0) {
-      ref.callbacks.push(callback);
-    }
+    tryAddItem(ref.callbacks, callback);
   }
 
   static unobserve(ref, callback) {
     if (ref) {
-      const refIndex = ref.callbacks.indexOf(callback) >= 0;
-      if (refIndex >= 0) {
-        ref.callbacks.splice(refIndex, 1);
-      }
+      tryRemoveItem(ref.callbacks, callback);
     }
   }
 
@@ -99,7 +104,7 @@ export class Ref {
       this.bounds = null;
     } else {
       // DEBUG
-      this.current.setAttribute("data-ref-key", this.key);
+      this.current && this.current.setAttribute("data-ref-key", this.key);
     }
   };
 
@@ -107,7 +112,7 @@ export class Ref {
     this.bounds = null;
     this.suspended = false;
     // DEBUG
-    this.current.setAttribute("data-suspend", "false");
+    this.current && this.current.setAttribute("data-suspend", "false");
   }
 
   suspend(calcBounds) {
@@ -119,7 +124,7 @@ export class Ref {
     this.suspended = true;
 
     // DEBUG
-    this.current.setAttribute("data-suspend", "true");
+    this.current && this.current.setAttribute("data-suspend", "true");
   }
 
   calcBounds() {
@@ -143,7 +148,8 @@ export class Ref {
     this.bounds = bounds;
     this.offsetBounds = null; // invalidate - so we can calculate if we need it
     // DEBUG
-    this.current.setAttribute("data-bounds", JSON.stringify(this.bounds));
+    this.current &&
+      this.current.setAttribute("data-bounds", JSON.stringify(this.bounds));
     return true;
   }
 
@@ -181,6 +187,11 @@ export class Ref {
   }
 
   updateTransitions() {
+    // guard against disposed access
+    if (!this.current) {
+      return;
+    }
+
     const cssProps = Object.keys(this.cssTransitions);
     if (!cssProps.length) {
       return;

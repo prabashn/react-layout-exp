@@ -40,6 +40,10 @@ export class Proximity extends React.Component {
 
   componentWillUnmount() {
     Viewport.unsub({ scroll: this.calculateOnScroll });
+    Ref.unobserve(this.containerRef, this.calculateCore);
+    if (this.targetRef) {
+      Ref.unobserve(this.targetRef, this.calculateCore);
+    }
   }
 
   watchElements = () => {

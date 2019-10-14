@@ -108,10 +108,22 @@ const layoutConfigFull = {
     gridTemplateRows: "100vh auto"
   },
   transitions: {
-    "layout-mode": {
-      informational: {
+    // "layout-mode": {
+    //   informational: {
+    //     containerStyle: {
+    //       gridTemplateRows: "auto auto"
+    //     }
+    //   }
+    // },
+    "river-mode": {
+      on: {
         containerStyle: {
           gridTemplateRows: "auto auto"
+        }
+      },
+      headings: {
+        containerStyle: {
+          gridTemplateRows: "calc(100vh - 60px) auto"
         }
       }
     }
@@ -137,6 +149,11 @@ const layoutConfigFull = {
         },
         "layout-mode": {
           focus: {
+            hide: true
+          }
+        },
+        "background-mode": {
+          off: {
             hide: true
           }
         }
@@ -171,6 +188,13 @@ const layoutConfigFull = {
           inspirational: {
             containerStyle: {
               gridTemplateRows: "0 0 7fr 0 2fr"
+            }
+          }
+        },
+        "river-mode": {
+          on: {
+            containerStyle: {
+              gridTemplateRows: "auto 50px auto 50px auto"
             }
           }
         }
@@ -218,7 +242,8 @@ const layoutConfigFull = {
           hide: true,
           childStyle: {
             position: "fixed",
-            top: "0"
+            top: "0",
+            zIndex: -1
           },
           transitions: {
             "nav-sticky": {
@@ -230,6 +255,11 @@ const layoutConfigFull = {
               },
               informational: {
                 hide: true
+              }
+            },
+            "background-mode": {
+              off: {
+                hide: false
               }
             }
           }
@@ -262,7 +292,8 @@ const layoutConfigFull = {
           row: 5,
           childStyle: {
             justifySelf: "center",
-            alignSelf: "start"
+            alignSelf: "start",
+            marginBottom: "50px"
           },
           behaviors: {
             animate: true,
@@ -277,25 +308,10 @@ const layoutConfigFull = {
             }
           },
           transitions: {
-            "layout-mode": {
-              // inspirational: {
-              //   behaviors: {
-              //     opacity: {
-              //       transitionGap: 150,
-              //       targetOffset: 150
-              //     }
-              //   }
-              // },
-              informational: {
-                childStyle: {
-                  marginBottom: "50px"
-                }
-              }
-            },
             "topsite-mode": {
               off: {
-                row: 4,
-                rowSpan: 2,
+                row: 1,
+                rowSpan: 5,
                 childStyle: {
                   alignSelf: "end"
                 },
@@ -320,6 +336,7 @@ const layoutConfigFull = {
         zIndex: 2
       },
       behaviors: {
+        animate: true,
         opacity: {
           targetSide: "bottom",
           selfSide: "bottom",
@@ -332,6 +349,14 @@ const layoutConfigFull = {
             opacity: {
               maxOpacity: 0
             }
+          }
+        },
+        "river-mode": {
+          headings: {
+            hide: true
+          },
+          off: {
+            hide: true
           }
         }
       }
@@ -346,6 +371,13 @@ const layoutConfigFull = {
       },
       behaviors: {
         animate: true
+      },
+      transitions: {
+        "river-mode": {
+          off: {
+            hide: true
+          }
+        }
       }
     }
   ]
@@ -355,9 +387,9 @@ export class AnaheimLayoutApp extends React.Component {
   layoutRef = React.createRef();
 
   topSiteModes = ["on", "off"];
-  topSiteModeIndex = -1;
+  backgroundModes = ["on", "off"];
 
-  riverModes = ["on", "headings", "scroll"];
+  riverModes = ["off", "headings", "on", "scroll"];
   riverModeIndex = -1;
 
   constructor(props) {
@@ -369,7 +401,9 @@ export class AnaheimLayoutApp extends React.Component {
       Transitions.pubMany(
         {
           "layout-mode": "focus",
-          "topsite-mode": "on"
+          "topsite-mode": "on",
+          "background-mode": "off",
+          "river-mode": "scroll"
         },
         true
       );
@@ -379,7 +413,9 @@ export class AnaheimLayoutApp extends React.Component {
       Transitions.pubMany(
         {
           "layout-mode": "inspirational",
-          "topsite-mode": "on"
+          "topsite-mode": "on",
+          "background-mode": "on",
+          "river-mode": "scroll"
         },
         true
       );
@@ -389,27 +425,49 @@ export class AnaheimLayoutApp extends React.Component {
       Transitions.pubMany(
         {
           "layout-mode": "informational",
-          "topsite-mode": "on"
+          "topsite-mode": "on",
+          "background-mode": "on",
+          "river-mode": "on"
         },
         true
       );
     });
 
     props.button4.addEventListener("click", () => {
-      this.topSiteModeIndex =
-        (this.topSiteModeIndex + 1) % this.topSiteModes.length;
-
-      Transitions.pub(
-        "topsite-mode",
-        this.topSiteModes[this.topSiteModeIndex],
-        true
-      );
+      this.cycleMode("topsite-mode", this.topSiteModes);
     });
 
     props.button5.addEventListener("click", () => {
       this.riverModeIndex = (this.riverModeIndex + 1) % this.riverModes.length;
       Transitions.pub("river-mode", this.riverModes[this.riverModeIndex], true);
     });
+
+    // background image
+    props.button6.addEventListener("click", () => {
+      const bgMode = "background-mode";
+      const bgModeState = Transitions.getState(bgMode);
+      const layoutModeState = Transitions.getState("layout-mode");
+      if (layoutModeState === "focus" && bgModeState === "off") {
+        // about to turn on background - go to inspirational
+        props.button2.click();
+      } else if (layoutModeState === "inspirational" && bgModeState === "on") {
+        // about to turn off background - go to focus
+        props.button1.click();
+      } else {
+        this.cycleMode(bgMode, this.backgroundModes);
+      }
+    });
+
+    // simulate loading focus mode as a starting point
+    props.button1.click();
+  }
+
+  cycleMode(transitionName, transitionStates) {
+    let stateIndex =
+      (transitionStates.indexOf(Transitions.getState(transitionName)) + 1) %
+      transitionStates.length;
+
+    Transitions.pub(transitionName, transitionStates[stateIndex], true);
   }
 
   render() {
