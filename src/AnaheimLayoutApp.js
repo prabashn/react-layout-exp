@@ -397,66 +397,92 @@ export class AnaheimLayoutApp extends React.Component {
 
     this.state = { layoutConfig: layoutConfigFull };
 
-    props.button1.addEventListener("click", () => {
-      Transitions.pubMany(
-        {
-          "layout-mode": "focus",
-          "topsite-mode": "on",
-          "background-mode": "off",
-          "river-mode": "scroll"
-        },
-        true
-      );
-    });
+    this.renderBooleanButton(
+      props.button1,
+      "Focused",
+      "layout-mode",
+      "focus",
+      () => {
+        Transitions.pubMany(
+          {
+            "layout-mode": "focus",
+            "topsite-mode": "on",
+            "background-mode": "off",
+            "river-mode": "scroll"
+          },
+          true
+        );
+      }
+    );
 
-    props.button2.addEventListener("click", () => {
-      Transitions.pubMany(
-        {
-          "layout-mode": "inspirational",
-          "topsite-mode": "on",
-          "background-mode": "on",
-          "river-mode": "scroll"
-        },
-        true
-      );
-    });
+    this.renderBooleanButton(
+      props.button2,
+      "Inspirational",
+      "layout-mode",
+      "inspirational",
+      () => {
+        Transitions.pubMany(
+          {
+            "layout-mode": "inspirational",
+            "topsite-mode": "on",
+            "background-mode": "on",
+            "river-mode": "scroll"
+          },
+          true
+        );
+      }
+    );
 
-    props.button3.addEventListener("click", () => {
-      Transitions.pubMany(
-        {
-          "layout-mode": "informational",
-          "topsite-mode": "on",
-          "background-mode": "on",
-          "river-mode": "on"
-        },
-        true
-      );
-    });
+    this.renderBooleanButton(
+      props.button3,
+      "Informational",
+      "layout-mode",
+      "informational",
+      () => {
+        Transitions.pubMany(
+          {
+            "layout-mode": "informational",
+            "topsite-mode": "on",
+            "background-mode": "on",
+            "river-mode": "on"
+          },
+          true
+        );
+      }
+    );
 
-    props.button4.addEventListener("click", () => {
+    this.renderStateButton(props.button4, "Top Sites", "topsite-mode", () => {
       this.cycleMode("topsite-mode", this.topSiteModes);
     });
 
-    props.button5.addEventListener("click", () => {
+    this.renderStateButton(props.button5, "River", "river-mode", () => {
       this.riverModeIndex = (this.riverModeIndex + 1) % this.riverModes.length;
       Transitions.pub("river-mode", this.riverModes[this.riverModeIndex], true);
     });
 
     // background image
-    props.button6.addEventListener("click", () => {
-      const bgMode = "background-mode";
-      const bgModeState = Transitions.getState(bgMode);
-      const layoutModeState = Transitions.getState("layout-mode");
-      if (layoutModeState === "focus" && bgModeState === "off") {
-        // about to turn on background - go to inspirational
-        props.button2.click();
-      } else if (layoutModeState === "inspirational" && bgModeState === "on") {
-        // about to turn off background - go to focus
-        props.button1.click();
-      } else {
-        this.cycleMode(bgMode, this.backgroundModes);
+    this.renderStateButton(
+      props.button6,
+      "Background",
+      "background-mode",
+      () => {
+        const bgMode = "background-mode";
+        const bgModeState = Transitions.getState(bgMode);
+        const layoutModeState = Transitions.getState("layout-mode");
+        if (layoutModeState === "focus" && bgModeState === "off") {
+          // about to turn on background - go to inspirational
+          props.button2.click();
+        } else if (
+          layoutModeState === "inspirational" &&
+          bgModeState === "on"
+        ) {
+          // about to turn off background - go to focus
+          props.button1.click();
+        } else {
+          this.cycleMode(bgMode, this.backgroundModes);
+        }
       }
-    });
+    );
 
     // simulate loading focus mode as a starting point
     props.button1.click();
@@ -474,5 +500,31 @@ export class AnaheimLayoutApp extends React.Component {
     return (
       <Layout ref={this.layoutRef} layoutConfig={this.state.layoutConfig} />
     );
+  }
+
+  renderBooleanButton(
+    button,
+    description,
+    transitionName,
+    transitionState,
+    callback
+  ) {
+    button.innerText = description;
+    Transitions.sub(
+      transitionName,
+      status =>
+        (button.innerText =
+          description + " (" + (status === transitionState) + ")")
+    );
+    button.addEventListener("click", callback);
+  }
+
+  renderStateButton(button, description, transitionName, callback) {
+    button.innerText = description;
+    Transitions.sub(
+      transitionName,
+      status => (button.innerText = description + " (" + status + ")")
+    );
+    button.addEventListener("click", callback);
   }
 }

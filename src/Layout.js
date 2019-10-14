@@ -112,15 +112,6 @@ export class Layout extends React.Component {
       return config;
     }
 
-    //keyToTransitionSubs[config.key] = new Transition();
-
-    // for (let transitionName in transitions) {
-    //   Transitions.sub(transitionName, this.rerender);
-
-    //   // save the subbed names for unsubbing when unmounting
-    //   this.subbedTransitionGroups[transitionName] = true;
-    // }
-
     // TODO: make this optimized so only the children that need to transition
     // state/config needs to re-render. May need to create new 'wrapper child components'
     // that are stateful, and listen to specific transition changes, and update

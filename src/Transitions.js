@@ -166,12 +166,7 @@ function tryPubTransitionStateChange(transitionName, state) {
   transitionState[transitionName] = state;
 
   // publish state change
-  mediator.pub(
-    TransitionMediatorPrefix + transitionName,
-    // arguments are (1) transition name, (2) state (true/false)
-    transitionName,
-    state
-  );
+  mediator.pub(TransitionMediatorPrefix + transitionName, state);
 
   console.log("Transitioned state := " + JSON.stringify(transitionState));
 
