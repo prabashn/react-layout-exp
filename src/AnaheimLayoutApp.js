@@ -103,7 +103,6 @@ const settingsGear = (
 
 const layoutConfigFull = {
   layoutType: "grid",
-  key: "main-grid",
   containerStyle: {
     gridTemplateRows: "100vh auto"
   },
@@ -128,10 +127,11 @@ const layoutConfigFull = {
       }
     }
   },
-  children: [
-    {
-      key: "background",
+  children: {
+    background: {
+      order: 0,
       childStyle: {
+        // we can't really specify positions here like this?
         position: "fixed",
         top: 0,
         left: 0,
@@ -159,8 +159,8 @@ const layoutConfigFull = {
         }
       }
     },
-    {
-      key: "settings-gear",
+    "settings-gear": {
+      order: 1,
       component: settingsGear,
       childStyle: {
         justifySelf: "end",
@@ -173,8 +173,8 @@ const layoutConfigFull = {
         }
       }
     },
-    {
-      key: "top-grid",
+    "top-grid": {
+      order: 2,
       layoutType: "grid",
       containerStyle: {
         gridTemplateRows: "auto 50px auto 50px auto"
@@ -187,7 +187,7 @@ const layoutConfigFull = {
         "layout-mode": {
           inspirational: {
             containerStyle: {
-              gridTemplateRows: "0 0 7fr 0 2fr"
+              gridTemplateRows: "0 0 auto 40vh auto"
             }
           }
         },
@@ -200,9 +200,9 @@ const layoutConfigFull = {
         }
       },
       row: 1,
-      children: [
-        {
-          key: "logo",
+      children: {
+        logo: {
+          order: 0,
           component: logo,
           //hide: true,
           row: 1,
@@ -232,11 +232,15 @@ const layoutConfigFull = {
             }
           }
         },
-        {
-          key: "search-background",
+        "search-background": {
+          order: 1,
           component: (
             <div
-              style={{ background: "white", width: "100vw", height: "162px" }}
+              style={{
+                background: "white",
+                width: "100vw",
+                height: "162px"
+              }}
             />
           ),
           hide: true,
@@ -264,8 +268,8 @@ const layoutConfigFull = {
             }
           }
         },
-        {
-          key: "search",
+        search: {
+          order: 2,
           aliasKeys: ["nav-container"],
           component: search,
           row: 3,
@@ -286,8 +290,8 @@ const layoutConfigFull = {
             }
           }
         },
-        {
-          key: "top-sites",
+        "top-sites": {
+          order: 3,
           component: topSites,
           row: 5,
           childStyle: {
@@ -324,10 +328,10 @@ const layoutConfigFull = {
             }
           }
         }
-      ]
+      }
     },
-    {
-      key: "river-loader",
+    "river-loader": {
+      order: 2,
       component: riverLoaderButton,
       row: 1,
       childStyle: {
@@ -361,8 +365,8 @@ const layoutConfigFull = {
         }
       }
     },
-    {
-      key: "river",
+    river: {
+      order: 3,
       component: river,
       row: 2,
       childStyle: {
@@ -380,7 +384,7 @@ const layoutConfigFull = {
         }
       }
     }
-  ]
+  }
 };
 
 export class AnaheimLayoutApp extends React.Component {
@@ -388,9 +392,7 @@ export class AnaheimLayoutApp extends React.Component {
 
   topSiteModes = ["on", "off"];
   backgroundModes = ["on", "off"];
-
   riverModes = ["off", "headings", "on", "scroll"];
-  riverModeIndex = -1;
 
   constructor(props) {
     super(props);
@@ -456,8 +458,7 @@ export class AnaheimLayoutApp extends React.Component {
     });
 
     this.renderStateButton(props.button5, "River", "river-mode", () => {
-      this.riverModeIndex = (this.riverModeIndex + 1) % this.riverModes.length;
-      Transitions.pub("river-mode", this.riverModes[this.riverModeIndex], true);
+      this.cycleMode("river-mode", this.riverModes);
     });
 
     // background image
@@ -498,7 +499,11 @@ export class AnaheimLayoutApp extends React.Component {
 
   render() {
     return (
-      <Layout ref={this.layoutRef} layoutConfig={this.state.layoutConfig} />
+      <Layout
+        ref={this.layoutRef}
+        layoutKey="page"
+        layoutConfig={this.state.layoutConfig}
+      />
     );
   }
 

@@ -14,28 +14,31 @@ export class Layout extends React.Component {
   //keyToTransitionSubs = {};
 
   render() {
-    return this.renderContainer(this.props.layoutConfig);
+    return this.renderContainer(this.props.layoutKey, this.props.layoutConfig);
   }
 
   rerender = () => {
     this.setState({});
   };
 
-  renderContainer(layoutConfig) {
+  renderContainer(key, layoutConfig) {
     const { layoutType, children } = layoutConfig;
     return layoutType === "grid"
       ? this.renderContainerCore(
+          key,
           layoutConfig,
           this.renderGridChildren(children),
           { display: "grid" }
         )
       : layoutType === "stack"
       ? this.renderContainerCore(
+          key,
           layoutConfig,
           this.renderStackChildren(children)
         )
       : layoutType === "flex"
       ? this.renderContainerCore(
+          key,
           layoutConfig,
           this.renderStackChildren(children),
           { display: "flex " }
@@ -44,8 +47,8 @@ export class Layout extends React.Component {
   }
 
   renderGridChildren(children) {
-    return children.map(childConfig => {
-      childConfig = this.processTransitions(childConfig);
+    return this.mapChildren(children, (childKey, childConfig) => {
+      childConfig = this.processTransitions(childKey, childConfig);
 
       const styleObj = {
         gridRow:
@@ -55,23 +58,23 @@ export class Layout extends React.Component {
         ...childConfig.childStyle
       };
 
-      return this.renderChild(childConfig, styleObj);
+      return this.renderChild(childKey, childConfig, styleObj);
     });
   }
 
   renderStackChildren(children) {
-    return children.map(childConfig => {
-      childConfig = this.processTransitions(childConfig);
-      return this.renderChild(childConfig, childConfig.childStyle);
+    return this.mapChildren(children, (childKey, childConfig) => {
+      childConfig = this.processTransitions(childKey, childConfig);
+      return this.renderChild(childKey, childConfig, childConfig.childStyle);
     });
   }
 
-  renderChild(childConfig, styleObj) {
+  renderChild(key, childConfig, styleObj) {
     if (childConfig.hide) {
       return null;
     }
 
-    const { key, aliasKeys, layoutType, behaviors } = childConfig;
+    const { aliasKeys, layoutType, behaviors } = childConfig;
 
     // check if we're trying to render a child that's also another container.
     // If so, we still need to render it as a normal component with the wrapper
@@ -86,7 +89,7 @@ export class Layout extends React.Component {
         behaviors,
         styleObj,
         // render the actual container as the child of the component
-        this.renderContainer({
+        this.renderContainer(key, {
           layoutType,
           containerStyle,
           children
@@ -105,8 +108,8 @@ export class Layout extends React.Component {
     );
   }
 
-  processTransitions(config) {
-    const { transitions, key } = config;
+  processTransitions(key, config) {
+    const { transitions } = config;
 
     if (!transitions) {
       return config;
@@ -155,8 +158,8 @@ export class Layout extends React.Component {
     return styleObj;
   }
 
-  renderContainerCore(layoutConfig, childComponents, overrideStyles) {
-    layoutConfig = this.processTransitions(layoutConfig);
+  renderContainerCore(key, layoutConfig, childComponents, overrideStyles) {
+    layoutConfig = this.processTransitions(key, layoutConfig);
     const { containerStyle, hide } = layoutConfig;
     const styleObj = { ...containerStyle, ...overrideStyles };
     return !hide ? <div style={styleObj}>{childComponents}</div> : null;
@@ -221,6 +224,12 @@ export class Layout extends React.Component {
     for (let childKey in this.childKeyToTransitionGroups) {
       Transitions.unsub(this.childKeyToTransitionGroups[childKey]);
     }
+  }
+
+  mapChildren(children, mapFn) {
+    const childKeys = Object.keys(children);
+    childKeys.sort((a, b) => (a.order || 0) - (b.order || 0));
+    return childKeys.map(childKey => mapFn(childKey, children[childKey]));
   }
 
   // getCachedBehaviors = memoize(

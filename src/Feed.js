@@ -10,6 +10,7 @@ export class Feed extends React.Component {
   render() {
     return (
       <Layout
+        layoutKey="feed"
         layoutConfig={{
           layoutType: "grid",
           containerStyle: {
