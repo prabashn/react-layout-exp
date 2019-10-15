@@ -13,11 +13,22 @@ export class Layout extends React.Component {
   childKeyToTransitionGroups = {};
   //keyToTransitionSubs = {};
 
+  constructor(props) {
+    super(props);
+
+    // HACK: since we don't have the ability to re-render individual children as
+    //  bulk subscriptions are processed, for now, just listen to the global handler
+    //  that fires when any transition happens (including bulk-subs, which will only cause
+    //  this to fire once)
+    Transitions.subAny(this.rerender);
+  }
+
   render() {
     return this.renderContainer(this.props.layoutKey, this.props.layoutConfig);
   }
 
   rerender = () => {
+    console.warn("Rerendering " + this.props.layoutKey);
     this.setState({});
   };
 
@@ -121,15 +132,20 @@ export class Layout extends React.Component {
     // internal state so only those components end up re-rendering instead of the
     // entire layout tree.
 
-    // create transition groups only once (since they should be considered as invariant
-    // during transitions)
-    let transitionGroup = this.childKeyToTransitionGroups[key];
-    if (!transitionGroup) {
-      const transitionNames = Object.keys(transitions);
-      transitionGroup = this.childKeyToTransitionGroups[
-        key
-      ] = Transitions.subMany(transitionNames, this.rerender);
-    }
+    // BUG: since we're re-rendering the entire layout on any of the children's transition
+    //  changes, we end up re-rendering the entire layout component many times over and over
+    //  when transition subs are dispatched for each child.
+    // V-----------------
+    // // create transition groups only once (since they should be considered as invariant
+    // // during transitions)
+    // let transitionGroup = this.childKeyToTransitionGroups[key];
+    // if (!transitionGroup) {
+    //   const transitionNames = Object.keys(transitions);
+    //   transitionGroup = this.childKeyToTransitionGroups[
+    //     key
+    //   ] = Transitions.subMany(transitionNames, this.rerender);
+    // }
+    // ^------------------
 
     // merge the base config with any transitions that are in-effect right now
     return Transitions.getConfig(config, transitions);

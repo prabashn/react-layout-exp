@@ -44,7 +44,15 @@ export const Transitions = {
   unsub: (transitionName, callback) =>
     mediator.unsub(TransitionMediatorPrefix + transitionName, callback),
 
-  pubMany: (transitionNamesAndStates, resetViewport, pubGroupsOnly) => {
+  pubMany: (
+    transitionNamesAndStates,
+    resetViewport,
+    /**
+     * Flag to indicate whether to bypass the single pub state change.
+     * Usuaully set to true when we're being called via the single pub method.
+     */
+    pubGroupsOnly
+  ) => {
     // if resetting viewport, scroll to top/left calc the viewport bounds
     // and then retry the pubMany call in the next scheduled animation frame.
     if (resetViewport) {
