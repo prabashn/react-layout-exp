@@ -13,9 +13,7 @@ export class Layout extends React.Component {
   childKeyToTransitionGroups = {};
   //keyToTransitionSubs = {};
 
-  constructor(props) {
-    super(props);
-
+  componentDidMount() {
     // HACK: since we don't have the ability to re-render individual children as
     //  bulk subscriptions are processed, for now, just listen to the global handler
     //  that fires when any transition happens (including bulk-subs, which will only cause
