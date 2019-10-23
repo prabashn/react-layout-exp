@@ -185,7 +185,7 @@ export class Layout extends React.Component {
 
     // scenario 1: component has no behaviors
     if (!behaviors || !behaviors.length) {
-      let childRef = Ref.createRef();
+      let childRef = Ref.createRef({ key });
       return (
         <div key={key} style={styleObj} ref={childRef.ref} id={key}>
           {component}

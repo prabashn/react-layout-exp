@@ -13,12 +13,14 @@ import { tryRemoveItem, tryAddItem } from "./arrayHelpers";
  * TODO: use this as a base class for GridAnimatable to apply the same perf optimizations.
  */
 export class BehaviorCollection extends React.Component {
-  containerRef = Ref.createRef();
+  containerRef;
   behaviorRefs = [];
   behaviorContext = {};
 
   constructor(props) {
     super(props);
+
+    this.containerRef = Ref.createRef({ key: "bc-" + props.behaviorKey });
 
     this.updateBehaviorContext({
       behaviorKey: props.behaviorKey,
@@ -89,7 +91,10 @@ export class BehaviorCollection extends React.Component {
 
     behaviors.forEach((behavior, i) => {
       const behaviorRef =
-        this.behaviorRefs[i] || (this.behaviorRefs[i] = React.createRef());
+        this.behaviorRefs[i] ||
+        (this.behaviorRefs[i] = React.createRef({
+          key: "bc-" + behaviorKey + "-b-" + i
+        }));
 
       const { class: Behavior, props } = behavior;
 

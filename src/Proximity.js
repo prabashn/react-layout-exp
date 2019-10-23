@@ -13,7 +13,7 @@ export class Proximity extends React.Component {
   behaviorContext = null;
   containerRef = null;
   targetRef = null;
-  targetContext = null;
+  //targetContext = null;
   status = null;
 
   constructor(props) {
@@ -21,8 +21,10 @@ export class Proximity extends React.Component {
 
     this.behaviorContext = props.behaviorContext;
     this.containerRef = this.behaviorContext.containerRef;
-    this.updated = this.mounted = this.watchElements;
+    this.updated = this.mounted = this.updateWatchElements;
 
+    // observe the container ref in case it changes (because it can often
+    // lead to resizing of children, which effect proximity calcs)
     this.updateObservedRef(null, this.containerRef, this.calculateCore);
   }
 
@@ -35,24 +37,29 @@ export class Proximity extends React.Component {
   }
 
   componentDidMount() {
+    // if we're observing the viewport, often tracking the viewport is important.
+    // Note we call the special calculateOnScroll handler that passes in the scroll
+    // flag as true to  calculateCore, which children can use
     Viewport.sub({ scroll: this.calculateOnScroll });
   }
 
   componentWillUnmount() {
     Viewport.unsub({ scroll: this.calculateOnScroll });
+
     Ref.unobserve(this.containerRef, this.calculateCore);
+
     if (this.targetRef) {
       Ref.unobserve(this.targetRef, this.calculateCore);
     }
   }
 
-  watchElements = () => {
-    const targetInfo = this.getTargetRefInfo();
+  updateWatchElements = () => {
+    const targetRef = this.getTargetRef();
 
     // if target ref changes, we need to observe the new one
     this.targetRef = this.updateObservedRef(
       this.targetRef,
-      targetInfo.targetRef,
+      targetRef,
       this.calculateCore
     );
 
@@ -62,7 +69,7 @@ export class Proximity extends React.Component {
     // on something that changes physical dimensions etc.
     this.calculateCore();
 
-    this.targetContext = targetInfo.targetContext;
+    //this.targetContext = targetInfo.targetContext;
   };
 
   updateObservedRef(oldRef, newRef, callback) {
@@ -89,7 +96,11 @@ export class Proximity extends React.Component {
     return selfRef && selfRef.current ? selfRef : this.containerRef;
   }
 
-  getTargetRefInfo() {
+  getTargetRef() {
+    return this._getTargetRefInfo().targetRef;
+  }
+
+  _getTargetRefInfo() {
     // if we're on a lifecycle event that requires us to re-evaluate
     // our target reference element, then try to get/update it
     const { targetRefName } = this.props;
@@ -113,6 +124,11 @@ export class Proximity extends React.Component {
     return {};
   }
 
+  // getTargetRect() {
+  //   // if an explicit target ref is not specified, callback to viewport bounds
+  //   return this.targetRef ? this.targetRef.getBounds() : Viewport.getBounds();
+  // }
+
   getBehaviorContext(refName) {
     if (refName && this.behaviorContext) {
       return this.behaviorContext.getBehaviorContext(refName);
@@ -124,24 +140,29 @@ export class Proximity extends React.Component {
   };
 
   calculateCore = fromScroll => {
-    const { targetSide = "top", selfSide = "top" } = this.props;
+    let { targetSide, selfSide = "top" } = this.props;
+
+    // default target side to bottom if an explicit reference is present
+    // or top if no target is present (i.e., assume viewport scenario)
+    if (!targetSide) {
+      targetSide = this.getTargetRef() ? "bottom" : "top";
+    }
+
     const targetDir = SideDirection[targetSide];
     const selfDir = SideDirection[selfSide];
 
     if (targetDir !== selfDir) {
       // don't try to compare non-sensical sides - for example left edge and top edge
       // are not compatible to be compared
+      console.error("Attempted to compare incompatible sides");
       return;
     }
 
-    const { targetOffset = 0, selfOffset = 0 } = this.props;
+    // get the rects we're trying to compare
     const selfRect = this.getSelfRef().getBounds();
+    const targetRect = (this.getTargetRef() || Viewport).getBounds(); //this.getTargetRect();
 
-    // if an explicit target ref is not specified, callback to viewport bounds
-    const targetRect = this.targetRef
-      ? this.targetRef.getBounds()
-      : Viewport.getBounds();
-
+    const { targetOffset = 0, selfOffset = 0 } = this.props;
     const selfEdge = selfRect[selfSide] + selfOffset;
     const targetEdge = targetRect[targetSide] + targetOffset;
 
@@ -152,10 +173,12 @@ export class Proximity extends React.Component {
         fromScroll,
         // self info
         selfRect,
+        selfSide,
         selfEdge,
         selfOffset,
         // target info
         targetRect,
+        targetSide,
         targetEdge
       })
     );

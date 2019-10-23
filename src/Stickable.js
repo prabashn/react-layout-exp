@@ -5,24 +5,38 @@ import { Ref } from "./Ref";
 import { Proximity } from "./Proximity";
 import { Transitions } from "./Transitions";
 import { Viewport } from "./Viewport";
-
-let uid = 0;
+import { globalStickList } from "./GlobalStickList";
 
 //export class Stickable extends Behavior {
 export class Stickable extends Proximity {
   stickyContainerRef = null;
   sizeHelperRef = null;
   isSticky = false;
-
-  _id = uid++;
+  dynamicTarget = null;
 
   constructor(props) {
     super(props);
-    this.stickyContainerRef = Ref.createRef();
-    this.sizeHelperRef = Ref.createRef();
+
+    const { behaviorContext, targetRefName } = props;
+
+    this.stickyContainerRef = Ref.createRef({
+      key: behaviorContext.behaviorKey + "-sticky"
+    });
+
+    this.sizeHelperRef = Ref.createRef({
+      key: behaviorContext.behaviorKey + "-size"
+    });
+
     this.calculateStick = throttle(this.calculateStick, 20);
 
     Ref.observe(this.stickyContainerRef, this.updateSizeHelper);
+
+    // if we don't have an explicit target reference name, then assume
+    // it's going to be the viewport - in which case we want to stick
+    // under the global list of stickies that are currently on the page.
+    if (!targetRefName) {
+      globalStickList.sub(this.onGlobalStickyListChanged);
+    }
   }
 
   renderCore() {
@@ -33,8 +47,8 @@ export class Stickable extends Proximity {
         <div ref={this.stickyContainerRef.ref}>{this.props.children}</div>
         <div
           ref={this.sizeHelperRef.ref}
-          style={{ display: "none" }}
-          //style={{ display: "none", outline: "3px solid red" }}
+          //style={{ display: "none" }}
+          style={{ display: "none", outline: "3px solid red" }}
         />
       </React.Fragment>
     );
@@ -45,8 +59,22 @@ export class Stickable extends Proximity {
     this.behaviorContext.popInnerRef(this.stickyContainerRef);
     Ref.dispose(this.stickyContainerRef);
     Ref.dispose(this.sizeHelperRef);
+
+    globalStickList.unsub(this.onGlobalStickyListChanged);
+    globalStickList.removeRef(this.stickyContainerRef);
+
     super.componentWillUnmount();
   }
+
+  onGlobalStickyListChanged = () => {
+    if (!this.isSticky) {
+      // if not sticky, update the target ref to the latest known one
+      this.dynamicTarget = globalStickList.getLast();
+      this.updateWatchElements();
+    }
+    // otherwise if we're already sticky nothing to do -- we should
+    // stay with the original sticky target we knew about.
+  };
 
   onStatusChanged(status) {
     this.calculateStick(status);
@@ -59,9 +87,22 @@ export class Stickable extends Proximity {
       : super.getSelfRef();
   }
 
+  // TODO: when a new stick element is added, we want to make sure to:
+  //  1) elements that are already sticking should not be update to reference a new stick element again
+  //  2) when a new stick element is added, elements that are not yet sticking must change their observtion
+  //    to that new element instead of last known
+
+  getTargetRef() {
+    return this.dynamicTarget || super.getTargetRef();
+  }
+
   updateSizeHelper = forceUpdate => {
     // no need to calculate unless we're being forced, or
     // we're currently in sticky mode
+
+    if (!forceUpdate && !this.isSticky) {
+      return;
+    }
 
     console.log(
       "updateSizeHelper, key = " +
@@ -69,10 +110,6 @@ export class Stickable extends Proximity {
         ", " +
         JSON.stringify({ forceUpdate, isSticky: this.isSticky })
     );
-
-    if (!forceUpdate && !this.isSticky) {
-      return;
-    }
 
     const sizeRect = this.stickyContainerRef.getBounds();
     if (this.sizeHelperRef.current) {
@@ -112,9 +149,12 @@ export class Stickable extends Proximity {
     this.stickyContainerRef.current.setAttribute(
       "data-sticky",
       JSON.stringify({
+        selfSide: status.selfSide,
+        targetSide: status.targetSide,
         selfEdge: status.selfEdge,
         targetEdge: status.targetEdge,
-        isSticky: this.isSticky
+        isSticky: this.isSticky,
+        targetRef: (this.targetRef && this.targetRef.key) || undefined
       })
     );
 
@@ -177,12 +217,25 @@ export class Stickable extends Proximity {
       top: null
     });
 
+    // undo global sticky related state
+    this.dynamicTarget = null;
+
     requestAnimationFrame(() => this.transit(false));
   }
 
   transit(stick) {
     this.isSticky = stick;
+
     stick ? this.sizeHelperRef.resume() : this.sizeHelperRef.suspend();
+    stick
+      ? globalStickList.addRef(this.stickyContainerRef)
+      : globalStickList.removeRef(this.stickyContainerRef);
+
+    // (stick ? tryAddItem : tryRemoveItem)(
+    //   Stickable.stickyRefs,
+    //   this.stickyContainerRef
+    // );
+
     Ref.updateRef(this.stickyContainerRef, { scrollSensitive: stick });
     this.behaviorContext.updateBehaviorContext({ animationsEnabled: !stick });
     this.pubStateTransition(stick);

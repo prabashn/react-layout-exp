@@ -70,7 +70,7 @@ const topSites = (
   </div>
 );
 
-const river = <Feed />;
+const feed = <Feed />;
 
 const riverLoaderButton = (
   <div
@@ -165,13 +165,16 @@ const layoutConfigFull = {
       childStyle: {
         justifySelf: "end",
         margin: "50px",
-        zIndex: 3
-      },
-      behaviors: {
-        stick: {
-          selfOffset: -50
-        }
+        zIndex: 3,
+        position: "fixed",
+        top: 0,
+        right: 0
       }
+      // behaviors: {
+      //   stick: {
+      //     selfOffset: -50
+      //   }
+      // }
     },
     "top-grid": {
       order: 2,
@@ -367,7 +370,7 @@ const layoutConfigFull = {
     },
     river: {
       order: 3,
-      component: river,
+      component: feed,
       row: 2,
       childStyle: {
         justifySelf: "stretch",

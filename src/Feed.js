@@ -16,9 +16,9 @@ export class Feed extends React.Component {
           containerStyle: {
             background: "black"
           },
-          children: [
-            {
-              key: "nav",
+          children: {
+            nav: {
+              order: 0,
               component: this.nav(),
               row: 1,
               childStyle: {
@@ -26,8 +26,8 @@ export class Feed extends React.Component {
               },
               behaviors: {
                 stick: {
-                  targetRefName: "nav-container",
-                  targetSide: "bottom",
+                  // targetRefName: "nav-container",
+                  // targetSide: "bottom",
                   transition: "nav-sticky",
                   targetOffset: 50
                 }
@@ -38,15 +38,15 @@ export class Feed extends React.Component {
               //   "layout-mode": {}
               // }
             },
-            {
-              key: "river",
+            river: {
+              order: 1,
               component: this.river(),
               row: 2,
               childStyle: {
                 justifySelf: "center"
               }
             }
-          ]
+          }
         }}
       />
     );
